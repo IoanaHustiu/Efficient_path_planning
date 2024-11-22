@@ -26,7 +26,7 @@ simulation.env.n_P = N_p;
 reg_edges={'r','b','g','c','m','k','y'};    %colors of proposition boundaries
 rob_color={'r','b','g','c','m','k','y'};    %colors of robots
 
-env_bounds = [0,400,0,400]; %environment bounds
+env_bounds = [0,400,0,400]; %the environment bounds
 obs_size = 10; %size for the grid
 n_cells = ((env_bounds(2)-env_bounds(1))/obs_size) * ((env_bounds(4)-env_bounds(3))/obs_size); %number of cells of the grid
 
