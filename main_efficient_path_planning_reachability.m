@@ -3,7 +3,7 @@ close all;
 warning on;
 clc;
 
-addpath(['.' filesep 'aux_toolboxes'],['.' filesep 'environment'],['.' filesep 'functions'],['.' filesep 'CM_simulation_18Nov']);
+addpath(['.' filesep 'functions']);
 runSolve();
 
 %% initialize structure for saving simulation data
@@ -16,14 +16,17 @@ simulation.interMILP = [];
 simulation.interLP = [];
 
 %% input data for the simulation
-N_exp = 1; %number of experiments
+N_exp = 100; %number of experiments
 N_r = 100; %number of robots
 N_p = 100; %numbers of regions of interest
+
+simulation.env.n_R = N_r;
+simulation.env.n_P = N_p;
 
 reg_edges={'r','b','g','c','m','k','y'};    %colors of proposition boundaries
 rob_color={'r','b','g','c','m','k','y'};    %colors of robots
 
-env_bounds = [0,200,0,200]; %environment bounds
+env_bounds = [0,400,0,400]; %environment bounds
 obs_size = 10; %size for the grid
 n_cells = ((env_bounds(2)-env_bounds(1))/obs_size) * ((env_bounds(4)-env_bounds(3))/obs_size); %number of cells of the grid
 
@@ -71,7 +74,7 @@ for exp=1:N_exp
 %     end
 
 %% create RMPN model
-    [Pre,Post] = rmt_construct_PN(T.adj);
+    [Pre,Post,~] = construct_PN(T);
     C = Post-Pre;
 
     np = size(C,1); %number of places
@@ -135,7 +138,7 @@ for exp=1:N_exp
             cost_completeMILP = sum(sigma_completeMILP);
 
 % compute trajectories
-            [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = rmt_sigma2trajectories(Pre,Post,m0,sigma_completeMILP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
+            [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0,sigma_completeMILP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
             if feasible_sigma
                 %check if any intermediary markings are violating the Boolean formula
                 RobotPlaces_completeMILP = Rob_places;
@@ -189,7 +192,7 @@ for exp=1:N_exp
 
     if exitflag_completeLP~=1 && exitflag_completeLP~=2
         fprintf('relaxed LP complete problem: intlinprog stopped - problem unfeasible.\n');
-        return;
+%         return;
     else
         cost_completeLP = Inf;
         tol = opt.ConstraintTolerance;
@@ -239,7 +242,7 @@ for exp=1:N_exp
             end
 
 % compute trajectories
-            [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = rmt_sigma2trajectories(Pre,Post,m0,sigma_completeLP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
+            [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0,sigma_completeLP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
             if feasible_sigma
                 %check if any intermediary markings are violating the Boolean formula
                 RobotPlaces_completeLP = Rob_places;
@@ -314,9 +317,13 @@ for exp=1:N_exp
         [sol_interMILP,fval_interMILP,exitflag_interMILP,output_interMILP] = solve(prob,'Solver','intlinprog','Options',opt);
         time_interMILP = toc;
 
+        flag_notFeasible_interMILP = 0;
+        count_notFeasible_interMILP = 0;
         if exitflag_interMILP~=1 && exitflag_interMILP~=2
             fprintf('MILP problem with intermediary markings is not feasbile.\n');
-            return;
+            count_notFeasible_interMILP = count_notFeasible_interMILP + 1;
+            flag_notFeasible_interMILP = 1;
+%             return;
         else
             if norm(sol_interMILP.sigma-round(sol_interMILP.sigma)) < 10*tol
                 sigma_interMILP = round(sol_interMILP.sigma);
@@ -330,7 +337,7 @@ for exp=1:N_exp
                 RobotInitPlaces_interMILP = T.R0; %initial cells of the robots
 
                 for i=1:s_bar
-                    [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = rmt_sigma2trajectories(Pre,Post,m_interMILP(:,i),sigma_interMILP(:,i),RobotInitPlaces_interMILP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
+                    [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m_interMILP(:,i),sigma_interMILP(:,i),RobotInitPlaces_interMILP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
                     if feasible_sigma
                         %check if any intermediary markings are violating the Boolean formula
                         RobotPlaces_interMILP = Rob_places;
@@ -350,51 +357,51 @@ for exp=1:N_exp
                 end
 
 % plot animation
-                plot_animation = 1;
-                RobotInitPlaces_interMILP = T.R0;
-
-                for i = 1 : length(T.Vert)
-                    T.centr{i} = mean(T.Vert{i},2)';
-                end
-
-                if plot_animation
-                    plot_environment(setdiff(find(m0),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
-                    title(sprintf('Iteration %d',0));
-                    for i = 1 : s_bar
-                        if (i == 1)
-                            current_marking = m0;
-                        else
-                            current_marking = m_interMILP(:,i);
-%                             current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces ));
-                        end
-                        plot_environment(setdiff(find(current_marking),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
-                        title(sprintf('Iteration %d',i));
-                        current_sigma = sigma_interMILP(:,i);
-%                         current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans ));
-                        [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,current_marking,current_sigma,RobotInitPlaces_interMILP);
-                        if ~feasible_sigma
-                            error('something wrong happened!');
-                        end
-                        RobotInitPlaces_interMILP = Rob_positions;
-                        for j = 1 : length(Rob_places)
-                            traj = Rob_places{j};
-                            for k = 1 : length(traj)-1
-                                plot([T.centr{traj(k)}(1) T.centr{traj(k+1)}(1)],[T.centr{traj(k)}(2) T.centr{traj(k+1)}(2)],'-','LineWidth',1,'Color','magenta');
-                            end
-                            if (length(traj) > 1)
-                                init = T.centr{traj(1)};
-                                fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
-                                init = T.centr{traj(end)};
-                                fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
-                            end
-                            %final destinations already reached
-                            reached = intersect(find(current_marking),find(mf));
-                            for k=1:length(reached)%final points reached
-                                fill(T.Vert{reached(k)}(1,:),T.Vert{reached(k)}(2,:),'green','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
-                            end
-                        end
-                    end
-                end
+%                 plot_animation = 1;
+%                 RobotInitPlaces_interMILP = T.R0;
+% 
+%                 for i = 1 : length(T.Vert)
+%                     T.centr{i} = mean(T.Vert{i},2)';
+%                 end
+% 
+%                 if plot_animation
+%                     plot_environment(setdiff(find(m0),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
+%                     title(sprintf('Iteration %d',0));
+%                     for i = 1 : s_bar
+%                         if (i == 1)
+%                             current_marking = m0;
+%                         else
+%                             current_marking = m_interMILP(:,i);
+% %                             current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces ));
+%                         end
+%                         plot_environment(setdiff(find(current_marking),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
+%                         title(sprintf('Iteration %d',i));
+%                         current_sigma = sigma_interMILP(:,i);
+% %                         current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans ));
+%                         [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,current_marking,current_sigma,RobotInitPlaces_interMILP);
+%                         if ~feasible_sigma
+%                             error('something wrong happened!');
+%                         end
+%                         RobotInitPlaces_interMILP = Rob_positions;
+%                         for j = 1 : length(Rob_places)
+%                             traj = Rob_places{j};
+%                             for k = 1 : length(traj)-1
+%                                 plot([T.centr{traj(k)}(1) T.centr{traj(k+1)}(1)],[T.centr{traj(k)}(2) T.centr{traj(k+1)}(2)],'-','LineWidth',1,'Color','magenta');
+%                             end
+%                             if (length(traj) > 1)
+%                                 init = T.centr{traj(1)};
+%                                 fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
+%                                 init = T.centr{traj(end)};
+%                                 fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
+%                             end
+%                             %final destinations already reached
+%                             reached = intersect(find(current_marking),find(mf));
+%                             for k=1:length(reached)%final points reached
+%                                 fill(T.Vert{reached(k)}(1,:),T.Vert{reached(k)}(2,:),'green','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
+%                             end
+%                         end
+%                     end
+%                 end
 
  % plot trajectories
 %                 plot_environment_obstacles(regions,obstacles,env_bounds,reg_edges,T.Vert); %partition
@@ -415,9 +422,15 @@ for exp=1:N_exp
         end
 
 % save the data in simulation structure
-        simulation.interMILP.runtime(exp) = time_interMILP;
-        simulation.interMILP.cost(exp) = cost_interMILP;
-        simulation.interMILP.no_inter_markings(exp) = s_bar;
+        if flag_notFeasible_interMILP
+            simulation.interMILP.runtime(exp) = time_interMILP;
+            simulation.interMILP.cost(exp) = Inf;
+            simulation.interMILP.no_inter_markings(exp) = Inf;
+        else
+            simulation.interMILP.runtime(exp) = time_interMILP;
+            simulation.interMILP.cost(exp) = cost_interMILP;
+            simulation.interMILP.no_inter_markings(exp) = s_bar;
+        end
 
 %% (4) LP with intermediate markings (for collision avoidance) - m and sigma as variables
 % s_bar unknown markings (continuous variables) + final marking is known (m_s_bar = V'*x)
@@ -432,9 +445,13 @@ for exp=1:N_exp
         [sol_interLP,fval_interLP,exitflag_interLP,output_interLP] = solve(prob,'Solver','intlinprog','Options',opt);
         time_interLP = toc;
         
+        flag_notFeasible_interLP = 0;
+        count_notFeasible_interLP = 0;
         if exitflag_interLP~=1 && exitflag_interLP~=2
             fprintf('relaxed LP problem with intermediary markings is not feasbile.\n');
-            return;
+            count_notFeasible_interLP = count_notFeasible_interLP + 1;
+            flag_notFeasible_interLP = 1;
+%             return;
         else
             if norm(sol_interLP.sigma-round(sol_interLP.sigma)) < 10*tol
                 sigma_interLP = round(sol_interLP.sigma);
@@ -448,7 +465,7 @@ for exp=1:N_exp
                 RobotInitPlaces_interLP = T.R0; %initial cells of the robots
         
                 for i=1:s_bar
-                    [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = rmt_sigma2trajectories(Pre,Post,m0_interLP,sigma_interLP(:,i),RobotInitPlaces_interLP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
+                    [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0_interLP,sigma_interLP(:,i),RobotInitPlaces_interLP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
                     if feasible_sigma
                         %check if any intermediary markings are violating the Boolean formula
                         RobotPlaces_interLP = Rob_places;
@@ -468,47 +485,47 @@ for exp=1:N_exp
                 end
 
 % plot animation
-                plot_animation = 1;
-                RobotInitPlaces_interMILP = T.R0;
-
-                if plot_animation
-                    plot_environment(setdiff(find(m0),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
-                    title(sprintf('Iteration %d',0));
-                    for i = 1 : s_bar
-                        if (i == 1)
-                            current_marking = m0;
-                        else
-                            current_marking = m_interLP(:,i);
-%                             current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces ));
-                        end
-                        plot_environment(setdiff(find(current_marking),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
-                        title(sprintf('Iteration %d',i));
-                        current_sigma = sigma_interLP(:,i);
-%                         current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans ));
-                        [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,current_marking,current_sigma,RobotInitPlaces_interMILP);
-                        if ~feasible_sigma
-                            error('something wrong happened!');
-                        end
-                        RobotInitPlaces_interMILP = Rob_positions;
-                        for j = 1 : length(Rob_places)
-                            traj = Rob_places{j};
-                            for k = 1 : length(traj)-1
-                                plot([T.centr{traj(k)}(1) T.centr{traj(k+1)}(1)],[T.centr{traj(k)}(2) T.centr{traj(k+1)}(2)],'-','LineWidth',1,'Color','magenta');
-                            end
-                            if (length(traj) > 1)
-                                init = T.centr{traj(1)};
-                                fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
-                                init = T.centr{traj(end)};
-                                fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
-                            end
-                            %final destinations already reached
-                            reached = intersect(find(current_marking),find(mf));
-                            for k=1:length(reached)%final points reached
-                                fill(T.Vert{reached(k)}(1,:),T.Vert{reached(k)}(2,:),'green','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
-                            end
-                        end
-                    end
-                end
+%                 plot_animation = 1;
+%                 RobotInitPlaces_interMILP = T.R0;
+% 
+%                 if plot_animation
+%                     plot_environment(setdiff(find(m0),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
+%                     title(sprintf('Iteration %d',0));
+%                     for i = 1 : s_bar
+%                         if (i == 1)
+%                             current_marking = m0;
+%                         else
+%                             current_marking = m_interLP(:,i);
+% %                             current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces ));
+%                         end
+%                         plot_environment(setdiff(find(current_marking),find(mf)),T.props,T.obstacles,env_bounds,T.Vert); %partition
+%                         title(sprintf('Iteration %d',i));
+%                         current_sigma = sigma_interLP(:,i);
+% %                         current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans ));
+%                         [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,current_marking,current_sigma,RobotInitPlaces_interMILP);
+%                         if ~feasible_sigma
+%                             error('something wrong happened!');
+%                         end
+%                         RobotInitPlaces_interMILP = Rob_positions;
+%                         for j = 1 : length(Rob_places)
+%                             traj = Rob_places{j};
+%                             for k = 1 : length(traj)-1
+%                                 plot([T.centr{traj(k)}(1) T.centr{traj(k+1)}(1)],[T.centr{traj(k)}(2) T.centr{traj(k+1)}(2)],'-','LineWidth',1,'Color','magenta');
+%                             end
+%                             if (length(traj) > 1)
+%                                 init = T.centr{traj(1)};
+%                                 fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
+%                                 init = T.centr{traj(end)};
+%                                 fill([init(1)-1.5 init(1)+1.5 init(1)+1.5 init(1)-1.5],[init(2)-1.5 init(2)-1.5 init(2)+1.5 init(2)+1.5],'magenta','EdgeColor','none');
+%                             end
+%                             %final destinations already reached
+%                             reached = intersect(find(current_marking),find(mf));
+%                             for k=1:length(reached)%final points reached
+%                                 fill(T.Vert{reached(k)}(1,:),T.Vert{reached(k)}(2,:),'green','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
+%                             end
+%                         end
+%                     end
+%                 end
         
 % plot trajectories
 %                 plot_environment_obstacles(regions,obstacles,env_bounds,reg_edges,T.Vert); %partition
@@ -528,9 +545,15 @@ for exp=1:N_exp
             end
         end
 % save the data in simulation structure
-        simulation.interLP.runtime(exp) = time_interLP;
-        simulation.interLP.cost(exp) = cost_interLP;
-        simulation.interLP.no_inter_markings(exp) = s_bar;
+        if flag_notFeasible_interLP
+            simulation.interLP.runtime(exp) = time_interLP;
+            simulation.interLP.cost(exp) = Inf;
+            simulation.interLP.no_inter_markings(exp) = Inf;
+        else
+            simulation.interLP.runtime(exp) = time_interLP;
+            simulation.interLP.cost(exp) = cost_interLP;
+            simulation.interLP.no_inter_markings(exp) = s_bar;
+        end
     else
         fprintf('Cell capacity is equal with 1 >>> no intermediary markings are needed.\n');
     end
