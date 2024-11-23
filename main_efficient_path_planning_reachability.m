@@ -17,8 +17,8 @@ simulation.interLP = [];
 
 %% input data for the simulation
 N_exp = 100; %number of experiments
-N_r = 100; %number of robots
-N_p = 100; %numbers of regions of interest
+N_r = 300; %number of robots
+N_p = 300; %numbers of regions of interest
 
 simulation.env.n_R = N_r;
 simulation.env.n_P = N_p;
@@ -26,7 +26,7 @@ simulation.env.n_P = N_p;
 reg_edges={'r','b','g','c','m','k','y'};    %colors of proposition boundaries
 rob_color={'r','b','g','c','m','k','y'};    %colors of robots
 
-env_bounds = [0,400,0,400]; %the environment bounds
+env_bounds = [0,700,0,700]; %environment bounds
 obs_size = 10; %size for the grid
 n_cells = ((env_bounds(2)-env_bounds(1))/obs_size) * ((env_bounds(4)-env_bounds(3))/obs_size); %number of cells of the grid
 
@@ -141,19 +141,19 @@ for exp=1:N_exp
             [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0,sigma_completeMILP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
             if feasible_sigma
                 %check if any intermediary markings are violating the Boolean formula
-                RobotPlaces_completeMILP = Rob_places;
-    
-                % initialize the robot trajectories
-                rob_traj_completeMILP = x0;
-                for r=1:N_r
-                    %         rob_traj{r} = x0{r}; %initial position of the robot r
-                    for i1=1:size(RobotPlaces_completeMILP{r},2)-1
-                        rob_traj_completeMILP{r}(:,end+1) = [T.mid_X(RobotPlaces_completeMILP{r}(i1),RobotPlaces_completeMILP{r}(i1+1)); T.mid_Y(RobotPlaces_completeMILP{r}(i1),RobotPlaces_completeMILP{r}(i1+1))];
-                    end
-                    if size(RobotPlaces_completeMILP{r},2)>1
-                        rob_traj_completeMILP{r}(:,end+1) = mean(T.Vert{RobotPlaces_completeMILP{r}(end)},2); %center of the final position
-                    end
-                end
+% %                 RobotPlaces_completeMILP = Rob_places;
+% %     
+% %                 % initialize the robot trajectories
+% %                 rob_traj_completeMILP = x0;
+% %                 for r=1:N_r
+% %                     %         rob_traj{r} = x0{r}; %initial position of the robot r
+% %                     for i1=1:size(RobotPlaces_completeMILP{r},2)-1
+% %                         rob_traj_completeMILP{r}(:,end+1) = [T.mid_X(RobotPlaces_completeMILP{r}(i1),RobotPlaces_completeMILP{r}(i1+1)); T.mid_Y(RobotPlaces_completeMILP{r}(i1),RobotPlaces_completeMILP{r}(i1+1))];
+% %                     end
+% %                     if size(RobotPlaces_completeMILP{r},2)>1
+% %                         rob_traj_completeMILP{r}(:,end+1) = mean(T.Vert{RobotPlaces_completeMILP{r}(end)},2); %center of the final position
+% %                     end
+% %                 end
     
 % % plot trajectories
 %                 plot_environment_obstacles(regions,obstacles,env_bounds,reg_edges,T.Vert); %partition
@@ -245,19 +245,19 @@ for exp=1:N_exp
             [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0,sigma_completeLP,RobotInitPlaces); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
             if feasible_sigma
                 %check if any intermediary markings are violating the Boolean formula
-                RobotPlaces_completeLP = Rob_places;
-    
-                % initialize the robot trajectories
-                rob_traj_completeLP = x0;
-                for r=1:N_r
-                    %         rob_traj{r} = x0{r}; %initial position of the robot r
-                    for i1=1:size(RobotPlaces_completeLP{r},2)-1
-                        rob_traj_completeLP{r}(:,end+1) = [T.mid_X(RobotPlaces_completeLP{r}(i1),RobotPlaces_completeLP{r}(i1+1)); T.mid_Y(RobotPlaces_completeLP{r}(i1),RobotPlaces_completeLP{r}(i1+1))];
-                    end
-                    if size(RobotPlaces_completeLP{r},2)>1
-                        rob_traj_completeLP{r}(:,end+1) = mean(T.Vert{RobotPlaces_completeLP{r}(end)},2); %center of the final position
-                    end
-                end
+% %                 RobotPlaces_completeLP = Rob_places;
+% %     
+% %                 % initialize the robot trajectories
+% %                 rob_traj_completeLP = x0;
+% %                 for r=1:N_r
+% %                     %         rob_traj{r} = x0{r}; %initial position of the robot r
+% %                     for i1=1:size(RobotPlaces_completeLP{r},2)-1
+% %                         rob_traj_completeLP{r}(:,end+1) = [T.mid_X(RobotPlaces_completeLP{r}(i1),RobotPlaces_completeLP{r}(i1+1)); T.mid_Y(RobotPlaces_completeLP{r}(i1),RobotPlaces_completeLP{r}(i1+1))];
+% %                     end
+% %                     if size(RobotPlaces_completeLP{r},2)>1
+% %                         rob_traj_completeLP{r}(:,end+1) = mean(T.Vert{RobotPlaces_completeLP{r}(end)},2); %center of the final position
+% %                     end
+% %                 end
     
 % plot trajectories
 %                 plot_environment_obstacles(regions,obstacles,env_bounds,reg_edges,T.Vert); %partition
@@ -340,19 +340,19 @@ for exp=1:N_exp
                     [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m_interMILP(:,i),sigma_interMILP(:,i),RobotInitPlaces_interMILP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
                     if feasible_sigma
                         %check if any intermediary markings are violating the Boolean formula
-                        RobotPlaces_interMILP = Rob_places;
-                        
-                        for r=1:N_r
-                            %         rob_traj{r} = x0{r}; %initial position of the robot r
-                            for i1=1:size(RobotPlaces_interMILP{r},2)-1
-                                rob_traj_interMILP{r}(:,end+1) = [T.mid_X(RobotPlaces_interMILP{r}(i1),RobotPlaces_interMILP{r}(i1+1)); T.mid_Y(RobotPlaces_interMILP{r}(i1),RobotPlaces_interMILP{r}(i1+1))];
-                            end
-                            if size(RobotPlaces_interMILP{r},2)>1
-                                rob_traj_interMILP{r}(:,end+1) = mean(T.Vert{RobotPlaces_interMILP{r}(end)},2); %center of the final position
-                            end
-                        end
-                        RobotInitPlaces_interMILP = Rob_positions;
-%                         m0_interMILP = m0_interMILP + C*sigma_interMILP(:,i);
+% %                         RobotPlaces_interMILP = Rob_places;
+% %                         
+% %                         for r=1:N_r
+% %                             %         rob_traj{r} = x0{r}; %initial position of the robot r
+% %                             for i1=1:size(RobotPlaces_interMILP{r},2)-1
+% %                                 rob_traj_interMILP{r}(:,end+1) = [T.mid_X(RobotPlaces_interMILP{r}(i1),RobotPlaces_interMILP{r}(i1+1)); T.mid_Y(RobotPlaces_interMILP{r}(i1),RobotPlaces_interMILP{r}(i1+1))];
+% %                             end
+% %                             if size(RobotPlaces_interMILP{r},2)>1
+% %                                 rob_traj_interMILP{r}(:,end+1) = mean(T.Vert{RobotPlaces_interMILP{r}(end)},2); %center of the final position
+% %                             end
+% %                         end
+% %                         RobotInitPlaces_interMILP = Rob_positions;
+% % %                         m0_interMILP = m0_interMILP + C*sigma_interMILP(:,i);
                     end
                 end
 
@@ -468,19 +468,19 @@ for exp=1:N_exp
                     [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0_interLP,sigma_interLP(:,i),RobotInitPlaces_interLP); % for all the sigma vectors that are feasible, choose one for which the number of transitions is minimum
                     if feasible_sigma
                         %check if any intermediary markings are violating the Boolean formula
-                        RobotPlaces_interLP = Rob_places;
-        
-                        for r=1:N_r
-                            %         rob_traj{r} = x0{r}; %initial position of the robot r
-                            for i1=1:size(RobotPlaces_interLP{r},2)-1
-                                rob_traj_interLP{r}(:,end+1) = [T.mid_X(RobotPlaces_interLP{r}(i1),RobotPlaces_interLP{r}(i1+1)); T.mid_Y(RobotPlaces_interLP{r}(i1),RobotPlaces_interLP{r}(i1+1))];
-                            end
-                            if size(RobotPlaces_interLP{r},2)>1
-                                rob_traj_interLP{r}(:,end+1) = mean(T.Vert{RobotPlaces_interLP{r}(end)},2); %center of the final position
-                            end
-                        end
-                        RobotInitPlaces_interLP = Rob_positions;
-                        m0_interLP = m0_interLP + C*sigma_interLP(:,i);
+% %                         RobotPlaces_interLP = Rob_places;
+% %         
+% %                         for r=1:N_r
+% %                             %         rob_traj{r} = x0{r}; %initial position of the robot r
+% %                             for i1=1:size(RobotPlaces_interLP{r},2)-1
+% %                                 rob_traj_interLP{r}(:,end+1) = [T.mid_X(RobotPlaces_interLP{r}(i1),RobotPlaces_interLP{r}(i1+1)); T.mid_Y(RobotPlaces_interLP{r}(i1),RobotPlaces_interLP{r}(i1+1))];
+% %                             end
+% %                             if size(RobotPlaces_interLP{r},2)>1
+% %                                 rob_traj_interLP{r}(:,end+1) = mean(T.Vert{RobotPlaces_interLP{r}(end)},2); %center of the final position
+% %                             end
+% %                         end
+% %                         RobotInitPlaces_interLP = Rob_positions;
+% %                         m0_interLP = m0_interLP + C*sigma_interLP(:,i);
                     end
                 end
 
