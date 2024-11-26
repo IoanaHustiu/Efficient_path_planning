@@ -1,3 +1,30 @@
+%    This is part of RMTool - Robot Motion Toolbox, for Matlab 2010b or newer.
+%
+%    Copyright (C) 2016 RMTool developing team. For people, details and citing 
+%    information, please see: http://webdiis.unizar.es/RMTool/index.html.
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+%% ============================================================================
+%   MOBILE ROBOT TOOLBOX
+%   Graphical User Interface
+%   First version released on January, 2019. 
+%   Last modification January 31, 2019.
+%   More information: http://webdiis.unizar.es/RMTool
+% ============================================================================
+
+
 function [feasible_sigma, Rob_places, Rob_trans, Rob_positions] = sigma2trajectories(Pre,Post,m0,sigma,R0)
 %convert a firing count vector sigma (obtained from ILP solution) to individual robot trajectories
 %inputs:
