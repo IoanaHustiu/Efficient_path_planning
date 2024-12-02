@@ -9,7 +9,7 @@ addpath(['.' filesep 'functions']);
 N_exp = 10; %number of experiments
 N_r = 10; %number of robots
 N_p = 10; %numbers of regions of interest
-flagBoolean = 1; %flag=1 -> Boolean formula, flag = 0 -> reachability
+flagBoolean = 0; %flag=1 -> Boolean formula, flag = 0 -> reachability
 
 reg_edges={'r','b','g','c','m','k','y'};    %colors of proposition boundaries
 rob_color={'r','b','g','c','m','k','y'};    %colors of robots
