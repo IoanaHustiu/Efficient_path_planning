@@ -4,14 +4,12 @@ warning on;
 clc;
 
 addpath(['.' filesep 'functions']);
-%runSolve();
-
-%% initialize structure for saving simulation data
 
 %% input data for the simulation
-N_exp = 1; %number of experiments
+N_exp = 10; %number of experiments
 N_r = 10; %number of robots
 N_p = 10; %numbers of regions of interest
+flagBoolean = 1; %flag=1 -> Boolean formula, flag = 0 -> reachability
 
 reg_edges={'r','b','g','c','m','k','y'};    %colors of proposition boundaries
 rob_color={'r','b','g','c','m','k','y'};    %colors of robots
@@ -31,6 +29,15 @@ for exp=1:N_exp
     if mod(exp-1,10)==0
         N_o = randi([round(0.2*(0.5+0.005*exp)*n_cells) round(0.3*(0.5+0.005*exp)*n_cells)]); %number of obstacles
         [regions,obstacles,o_cells,initial_point,~,adj,rem_cells] = random_env_generator(N_p,N_o,obs_size,N_r,env_bounds);
+
+        if flagBoolean
+            N_c = randi([1,2^N_p],1);
+            [At,bt] = generateBoolean_formula(N_c,N_p);
+%         At = [-1 0 0 0 0;0 0 -1 0 0;0 0 0 0 -1;0 0 0 -1 0];
+%         N_c = size(At,1);
+%         bt = (sum(At'==1)-1)';
+        end
+
     else %keep the position of the obstacles and of the regions of interest and change the initial position of the robots
         random = [];
         x = (env_bounds(2)-env_bounds(1))/obs_size;
@@ -54,14 +61,23 @@ for exp=1:N_exp
     [Pre,Post,~] = construct_PN(T);
     C = Post-Pre;
 
+    V = zeros(N_p,size(C,1));
+    for i=1:N_p
+        V(i,T.props{i}) = 1;
+    end
+
     m0 = zeros(size(Pre,1),1);
-    mf = zeros(size(Pre,1),1);
     for i = 1 : length(T.R0)
         m0(T.R0(i)) = m0(T.R0(i)) + 1;
     end
-    for i = 1 : length(T.props)
-        mf(T.props{i}) = mf(T.props{i}) + 1;
+
+    if flagBoolean==0
+        mf = zeros(size(Pre,1),1);
+        for i = 1 : length(T.props)
+            mf(T.props{i}) = mf(T.props{i}) + 1;
+        end
     end
+
     % save the environment data in the simulation structure
     simulation(exp).n_R = N_r;
     simulation(exp).n_P = N_p;
@@ -69,10 +85,14 @@ for exp=1:N_exp
     simulation(exp).Post = Post;
     simulation(exp).Pre = Pre;
     simulation(exp).m0 = m0;
-    simulation(exp).mf = mf;
     simulation(exp).T = T;
     simulation(exp).env_limit = env_limit;
-    simulation(exp).optim = solve_LPs(Post,Pre,m0,mf,T,env_limit,1);
 
+    if flagBoolean
+        simulation(exp).optim = solve_LPs_boolean(At,bt,Post,Pre,V,m0,T,env_limit,0);
+    else
+        simulation(exp).mf = mf;
+        simulation(exp).optim = solve_LPs(Post,Pre,m0,mf,T,env_limit,0);
+    end
 
 end
