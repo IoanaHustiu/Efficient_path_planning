@@ -190,7 +190,7 @@ if plot_animation
 
     if flag_SP
         plot_environment_smartPlant(T.nj,T.rem_cell(setdiff(find(current_marking),T.props)),...
-            T.props,T.obstacles,[0,env_limit,0,env_limit],T.Vert); %partition
+            T.props,T.obstacles,env_limit,T.Vert); %partition
     else
         plot_environment(T.rem_cell(setdiff(find(current_marking),T.props)),...
             T.props,T.obstacles,env_limit,T.Vert); %partition
@@ -232,7 +232,7 @@ if plot_animation && flag_ILP
 
     if flag_SP
         plot_environment_smartPlant(T.nj,T.rem_cell(setdiff(find(current_marking),T.props)),...
-            T.props,T.obstacles,[0,env_limit,0,env_limit],T.Vert); %partition
+            T.props,T.obstacles,env_limit,T.Vert); %partition
     else
         plot_environment(T.rem_cell(setdiff(find(current_marking),T.props)),...
             T.props,T.obstacles,env_limit,T.Vert); %partition

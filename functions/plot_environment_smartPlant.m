@@ -2,7 +2,7 @@ function env_h = plot_environment_smartPlant(nj,initial_regions,final_regions,ob
 %ver. dec.2015
 
 env_h=figure(); %figure handle
-axis(env_bounds); %axis(world_dim);
+axis([0 env_bounds 0 env_bounds]); %axis(world_dim);
 hold on
 set(gca,'Box','on');
 set(gca,'XTick',[],'YTick',[]);
