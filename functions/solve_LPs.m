@@ -1,4 +1,4 @@
-function [simulation,flag] = solve_LPs(Post,Pre,m0,mf,T,env_limit,plot_animation)
+function [simulation,flag] = solve_LPs(Post,Pre,m0,mf,T,env_limit,plot_animation,flag_ILP)
 
 % for each simulation the runtime, the cost, the number of iteration/intermediary markings and the cell capacity will be saved
 simulation.completeMILP = [];
@@ -10,7 +10,7 @@ C = Post - Pre;
 nplaces = size(Post,1);
 ntrans = size(Post,2);
 if (plot_animation)
-    plot_environment(T.rem_cell(find(m0)),T.rem_cell(find(mf)),T.obstacles,[0,env_limit,0,env_limit],T.Vert); %partition
+    plot_environment(T.rem_cell(find(m0)),T.rem_cell(find(mf)),T.obstacles,env_limit,T.Vert); %partition
     title(sprintf('Iteration %d',1));
 end
 
@@ -31,29 +31,34 @@ tic;
 time_LP1 = toc;
 if (exitflag1 ~= 1)
     fprintf('Error solving first LP problem!\n');
-    fprintf('Generate new initial and final marking\n');
+    fprintf('Generate new initial anf final marking\n');
     flag = 0;
     return;
 else
     fprintf('First LP problem solved!\n');    
 end
-tic;
-[sol1i,fval1i,exitflag1] = intlinprog(f1,1:size(Aeq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),[],[],opt);
-time_IP1 = toc;
 
-if (exitflag1 ~= 1)
-    fprintf('Error solving first IP problem!\n');
-    return;
-else
-    fprintf('First IP problem solved!\n');    
+if flag_ILP
+    tic;
+    [sol1i,fval1i,exitflag1] = intlinprog(f1,1:size(Aeq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),[],[],opt);
+    time_IP1 = toc;
+
+    if (exitflag1 ~= 1)
+        fprintf('Error solving first IP problem!\n');
+        return;
+    else
+        fprintf('First IP problem solved!\n');
+    end
 end
 
 
 % save the data in simulation structure
-simulation.completeMILP.runtime = time_IP1;
-simulation.completeMILP.cost = sum(sol1i(1:ntrans));
-simulation.completeMILP.sol = sol1i(1:end-1);
-simulation.completeMILP.cellCapacity = sol1i(end);
+if flag_ILP
+    simulation.completeMILP.runtime = time_IP1;
+    simulation.completeMILP.cost = sum(sol1i(1:ntrans));
+    simulation.completeMILP.sol = sol1i(1:end-1);
+    simulation.completeMILP.cellCapacity = sol1i(end);
+end
 simulation.completeLP.runtime = time_LP1;
 simulation.completeLP.cost = sum(sol1(1:ntrans));
 simulation.completeLP.sol = sol1(1:end-1);
@@ -92,9 +97,11 @@ if plot_animation
     fprintf(1,'\nOptimal solution LP1 = %s',num2str(fval1));
     fprintf(1,'\nInfinite norm LP1 of Post * sigma=%s',num2str(sol1(end)));
 
-    fprintf(1,'\n\nSolution IP1 found in %f [secs].',time_IP1);
-    fprintf(1,'\nOptimal solution IP1 = %s',num2str(fval1i));
-    fprintf(1,'\nInfinite norm IP1 of Post * sigma=%s',num2str(sol1i(end)));
+    if flag_ILP
+        fprintf(1,'\n\nSolution IP1 found in %f [secs].',time_IP1);
+        fprintf(1,'\nOptimal solution IP1 = %s',num2str(fval1i));
+        fprintf(1,'\nInfinite norm IP1 of Post * sigma=%s',num2str(sol1i(end)));
+    end
     %solve the problem with intermediate markings
     fprintf(1,'\n\n=============================================');
     fprintf(1,'\n           Start solving second problem...');
@@ -106,9 +113,9 @@ clear Aineq1;clear bineq1;
 
 exitflag2 = 0;
 num_intermediate = ceil(sol1(end)-eps*1000);
-fprintf(1,'Solve second problem with %d intermediate markings \n',num_intermediate);
 
 if (num_intermediate > 1)
+    fprintf(1,'\nSolve second problem with %d intermediate markings \n',num_intermediate);
     while (exitflag2 ~= 1)
         Aeq2 = zeros(num_intermediate*nplaces+1,num_intermediate*(nplaces+ntrans));
         Aineq2 = zeros(num_intermediate*nplaces,num_intermediate*(nplaces+ntrans));
@@ -145,20 +152,25 @@ if (num_intermediate > 1)
             fprintf('Second LP with intermediate markings problem solved!\n');
         end
     end
-    tic;
-    [sol2i,fval2i,exitflag2] = intlinprog(f2,1:size(Aineq2,2),Aineq2,bineq2,Aeq2,beq2,zeros(1,size(Aeq2,2)),[],[],opt);
-    time_IP2 = toc;
-    if (exitflag2 ~= 1)
-        fprintf(1,'Error solving second ILP for %d intermediate markings! \n',num_intermediate);
-        return;
-    else
-        fprintf('Second ILP with intermediate markings problem solved!\n');
+    
+    if flag_ILP
+        tic;
+        [sol2i,fval2i,exitflag2] = intlinprog(f2,1:size(Aineq2,2),Aineq2,bineq2,Aeq2,beq2,zeros(1,size(Aeq2,2)),[],[],opt);
+        time_IP2 = toc;
+        if (exitflag2 ~= 1)
+            fprintf(1,'Error solving second ILP for %d intermediate markings! \n',num_intermediate);
+            return;
+        else
+            fprintf('\nSecond ILP with intermediate markings problem solved!\n');
+        end
     end
 
-    % save the data in simulation structure
-    simulation.interMILP.runtime = time_IP2;
-    simulation.interMILP.cost = 0;
-    simulation.interMILP.no_inter_markings = num_intermediate;
+    if flag_ILP 
+        % save the data in simulation structure
+        simulation.interMILP.runtime = time_IP2;
+        simulation.interMILP.cost = 0;
+        simulation.interMILP.no_inter_markings = num_intermediate;
+    end
 
     % save the data in simulation structure
     simulation.interLP.runtime = time_LP2;
@@ -166,48 +178,57 @@ if (num_intermediate > 1)
     simulation.interLP.no_inter_markings = num_intermediate;
 
     for i = 1 : num_intermediate
-        simulation.interMILP.cost = simulation.interMILP.cost + sum(sol2i( (i-1)*(nplaces+ ntrans) + 1 + nplaces : i*(nplaces+ ntrans) ));
-        simulation.interLP.cost = simulation.interLP.cost  + sum(sol2( (i-1)*(nplaces+ ntrans) + 1 + nplaces : i*(nplaces+ ntrans) ));
+        if flag_ILP
+            simulation.interMILP.cost = simulation.interMILP.cost + sum(sol2i((i-1)*(nplaces+ntrans) + 1 + nplaces:i*(nplaces+ntrans)));
+        end
+        simulation.interLP.cost = simulation.interLP.cost + sum(sol2((i-1)*(nplaces+ntrans) + 1 + nplaces:i*(nplaces+ntrans)));
     end
-else % num_inermediare =1 so no necessary to solve this
-    % save the data in simulation structure
-    simulation.interMILP.runtime = 0;
-    simulation.interMILP.cost = 0;
-    simulation.interMILP.no_inter_markings = num_intermediate;
+else % num_intermediare = 1 so no necessary to solve this
+    fprintf("\nNumber of intermediary markings is equal with 1. The second problem will not be solved.\n");
+    if flag_ILP
+        % save the data in simulation structure
+        simulation.interMILP.runtime = 0;
+        simulation.interMILP.cost = 0;
+        simulation.interMILP.no_inter_markings = num_intermediate;
+    end
 
     % save the data in simulation structure
     simulation.interLP.runtime = 0;
     simulation.interLP.cost = 0;
     simulation.interLP.no_inter_markings = num_intermediate;
 
-    simulation.interMILP.cost = simulation.completeLP.cost;
+    if flag_ILP
+        simulation.interMILP.cost = simulation.completeLP.cost;
+        time_IP2 = 0;
+        fval2i=0;
+    end
     simulation.interLP.cost = simulation.completeLP.cost;
-    time_LP2 = 0;fval2=0;
-    time_IP2 = 0;fval2i=0;
+    time_LP2 = 0;
+    fval2=0;
 end
-if plot_animation
-    fprintf(1,'\n=============================================');
-    fprintf(1,'\n           Solving using intliprog');
-    fprintf(1,'\n=============================================');
 
+if plot_animation
     fprintf(1,'\nSolution LP2 found in %f [secs].',time_LP2);
     fprintf(1,'\nOptimal value LP2 = %s\n',num2str(fval2));
-    fprintf(1,'\n\nSolution IP2 found in %f [secs].',time_IP2);
-    fprintf(1,'\nOptimal value IP2 = %s\n',num2str(fval2i));
+
+    if flag_ILP
+        fprintf(1,'\nSolution IP2 found in %f [secs].',time_IP2);
+        fprintf(1,'\nOptimal value IP2 = %s\n',num2str(fval2i));
+    end
 
     for i = 1 : num_intermediate
         if (i == 1)
             current_marking = m0;
         else
-            current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces ));
+            current_marking = round(sol2((nplaces+ntrans)*(i-2)+1: (nplaces+ntrans)*(i-2)+nplaces));
             plot_environment(T.rem_cell(setdiff(find(current_marking),find(mf))),...
-                T.rem_cell(find(mf)),T.obstacles,[0,env_limit,0,env_limit],T.Vert); %partition
+                T.rem_cell(find(mf)),T.obstacles,env_limit,T.Vert); %partition
             title(sprintf('Iteration %d',i));
         end
         if num_intermediate == 1
-            current_sigma = round(sol1i(1 : ntrans ));
+            current_sigma = round(sol1(1:ntrans));
         else
-            current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans ));
+            current_sigma = round(sol2((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans));
         end
         [feasible_sigma, Rob_places, ~, ~] = sigma2trajectories(Pre,Post,current_marking,current_sigma,find(current_marking));
         if ~feasible_sigma

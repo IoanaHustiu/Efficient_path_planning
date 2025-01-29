@@ -1,17 +1,11 @@
 function T = create_partition_obstacles(regions,o_cells,bounds,varargin)
-%ver. dec.2015
 %partition and observation set; OBS_set is for one robot, i.e. disjoint regions cannot be simmultaneously observed
 
-% [C,adj,OBS_set,obs,mid_X,mid_Y]=triangular_decomposition_regions(regions,bounds);
-[C,adj,OBS_set,obs,mid_X,mid_Y] = rmt_grid_decomposition_regions(regions,bounds);
+[C,adj]=grid_decomposition_regions(env_bounds);
 
 T.Q=1:length(C);
 T.Vert=C;
 T.adj=adj;
-T.OBS_set=OBS_set;
-T.obs=obs;
-T.mid_X=mid_X;
-T.mid_Y=mid_Y;
 
 for i=1:length(o_cells)
     T.obstacles{i} = T.Vert{o_cells(i)};
@@ -50,14 +44,6 @@ if nargin==4
 
 end
 
-% %eliminate those cells that are obstacles
-% T.Q(end-length(o_cells)+1:end)=[]; 
-% T.Vert(o_cells)=[];
-% T.adj(o_cells,:)=[]; T.adj(:,o_cells)=[];
-% T.obs(o_cells)=[];
-% T.mid_X(o_cells,:)=[]; T.mid_X(:,o_cells)=[];
-% T.mid_Y(o_cells,:)=[]; T.mid_Y(:,o_cells)=[];
-% T.free_sp(end-length(o_cells)+1:end)=[];
 
 T.adj(o_cells,:) = 0;
 T.adj(:,o_cells) = 0;

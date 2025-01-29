@@ -13,13 +13,13 @@ for i=1:length(initial_regions) %initial points
 end
 
 for i=1:length(final_regions)%final points
-    fill(cells{final_regions{i}}(1,:),cells{final_regions{i}}(2,:),'blue','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
+    fill(cells{final_regions(i)}(1,:),cells{final_regions(i)}(2,:),'blue','LineWidth',1);%,'LineStyle','--');,'FaceAlpha',0.5
 %    centr=mean(cells{final_regions{i}},2)';
 %    text(centr(1),centr(2),sprintf('o_{%d}',i),'HorizontalAlignment','center','Color','w','FontSize',12,'FontWeight','bold','FontName','Times New Roman');
 end
 
 for i=1:length(obstacles) %obstacles
-    fill(obstacles{i}(1,:),obstacles{i}(2,:),'black','LineWidth',1);%,'LineStyle','--');'FaceAlpha',0.5
+    fill(cells{obstacles(i)}(1,:),cells{obstacles(i)}(2,:),'black','LineWidth',1);%,'LineStyle','--');'FaceAlpha',0.5
 %    centr=mean(cells{obstacles(i)},2)';
 %    text(centr(1),centr(2),sprintf('y_{%d}',i),'HorizontalAlignment','center','Color','white','FontSize',12,'FontWeight','bold','FontName','Times New Roman');
 end
