@@ -11,6 +11,8 @@ fprintf(2,"\nEfficient path planning method for task allocation algorithm for Bo
 fprintf(2,"==========================================================================================\n");
 
 fprintf("SMART PLANT EXAMPLE\n");
+fprintf("The initial positions of the robots and the environment is randomly generated.\n");
+fprintf("\t - obstacles are represented with gray;\n");
 flag_ILP = input("Do you want to compute the solution of the ILP problem? It might take a while... (1 - yes, 0 - no): ");
 
 N_exp = 1; %number of experiments
@@ -27,11 +29,13 @@ nj4 = 15; %jobs type4
 N_p = nj1 + nj2 + nj3 + nj4; %manufacturing plant
 
 fprintf("Number of robots: %i\n",N_r);
+fprintf("\t - the robots that are rewuired to move are represented with red;\n");
+fprintf("\t - the robots that are not required to move are represented with green;\n");
 fprintf("Number of tasks: %i, from which\n",N_p);
-fprintf("\t\t - type 1 jobs: %i (should be 100%% fulfilled)\n",nj1);
-fprintf("\t\t - type 2 jobs: %i (should be 100%% fulfilled)\n",nj2);
-fprintf("\t\t - type 3 jobs: %i (should be at least 50%% fulfilled)\n",nj3);
-fprintf("\t\t - type 4 jobs: %i (should be at least 75%% fulfilled)\n",nj4);
+fprintf("\t\t - type 1 jobs: %i (should be 100%% fulfilled) - the blue cells\n",nj1);
+fprintf("\t\t - type 2 jobs: %i (should be 100%% fulfilled) - the cyan cells\n",nj2);
+fprintf("\t\t - type 3 jobs: %i (should be at least 50%% fulfilled) - the dark green cells\n",nj3);
+fprintf("\t\t - type 4 jobs: %i (should be at least 75%% fulfilled) - the yellow cells\n",nj4);
 
 n_cells = ((env_bounds(2)-env_bounds(1))/obs_size) * ((env_bounds(4)-env_bounds(3))/obs_size); %number of cells of the grid
 [C,adj] = grid_decomposition_regions(env_bounds,obs_size);
