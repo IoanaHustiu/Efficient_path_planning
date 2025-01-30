@@ -11,7 +11,7 @@ fprintf(2,"\nEfficient path planning method for task allocation algorithm for Bo
 fprintf(2,"==========================================================================================\n");
 
 fprintf("SMART PLANT EXAMPLE\n");
-fprintf("The initial positions of the robots and the environment is randomly generated.\n");
+fprintf("The initial positions of the robots and the environment are randomly generated.\n");
 fprintf("\t - obstacles are represented with gray;\n");
 flag_ILP = input("Do you want to compute the solution of the ILP problem? It might take a while... (1 - yes, 0 - no): ");
 

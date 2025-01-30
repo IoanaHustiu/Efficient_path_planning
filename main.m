@@ -8,7 +8,7 @@ addpath(['.' filesep 'functions']);
 fprintf(2,"==========================================================================================");
 fprintf(2,"\nEfficient path planning method for task allocation algorithm for Boolean specifications\n");
 fprintf(2,"==========================================================================================\n");
-fprintf("The initial positions of the robots and the environment is randomly generated.\n");
+fprintf("The initial positions of the robots and the environment are randomly generated.\n");
 
 flag_SP = 0;
 case_t  = -1;
@@ -18,11 +18,11 @@ while case_t~=1 && case_t~=2
     if case_t==1
         fprintf(2,"Reachability case option\n");
         fprintf("\t - robots are represented with red;\n");
-        fprintf("\t - regions are represented with blue (if intermediary markings are used for collision avoidance,;\n");
+        fprintf("\t - regions are represented with blue (if intermediary markings are used for collision avoidance,\n");
         fprintf("\t\t then the already visited regions are colored with green);\n");
         fprintf("\t - obstacles are represented with gray;\n");
     elseif case_t==2
-        fprintf(2,"Boolean specification option\n");
+        fprintf(2,"Boolean specification option - the Boolean formula in CNF form is randomly generated\n");
         fprintf("\t - robots are represented with red;\n");
         fprintf("\t - regions are represented with blue;\n");
         fprintf("\t - obstacles are represented with gray;\n");
