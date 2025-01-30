@@ -163,10 +163,12 @@ simulation.completeLPfixingB.sol = sol1x(nplaces+1:nplaces+ntrans);
 simulation.completeLPfixingB.cellCapacity = s;
 simulation.completeLPfixingB.iterations = iterationsX;
 
+fprintf("A number of %i robots will move in order to fulfill the Boolean specification.\n",sum(xStar));
+
 if plot_animation
-    fprintf(1,'\n=============================================');
-    fprintf(1,'\n           Solving using intlinprog');
-    fprintf(1,'\n=============================================');
+    fprintf(1,'\n============================================================');
+    fprintf(1,'\n    Solution for LP obtained using intlinprog solver ');
+    fprintf(1,'\n============================================================');
     fprintf(1,'\nSolution LP1 found in %f [secs].',time_LP1);
 
     if flag_ILP

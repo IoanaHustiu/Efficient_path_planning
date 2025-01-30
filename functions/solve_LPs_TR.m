@@ -121,6 +121,9 @@ end
 
 
 if plot_animation
+    fprintf(1,'\n============================================================');
+    fprintf(1,'\n    Solution for LP obtained using intlinprog solver ');
+    fprintf(1,'\n============================================================');
     fprintf(1,'\nSolution LP1 found in %f [secs].',time_LP1);
     fprintf(1,'\nOptimal solution LP1 = %s',num2str(fval1));
     fprintf(1,'\nInfinite norm LP1 of Post * sigma=%s',num2str(s));

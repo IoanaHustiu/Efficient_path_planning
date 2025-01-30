@@ -8,6 +8,7 @@ addpath(['.' filesep 'functions']);
 fprintf(2,"==========================================================================================");
 fprintf(2,"\nEfficient path planning method for task allocation algorithm for Boolean specifications\n");
 fprintf(2,"==========================================================================================\n");
+fprintf("The initial positions of the robots and the environment is randomly generated.\n")
 
 flag_SP = 0;
 case_t  = -1;
