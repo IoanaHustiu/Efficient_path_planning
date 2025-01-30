@@ -17,15 +17,13 @@ while case_t~=1 && case_t~=2
     case_t = input("reachability case (1) or Boolean specification (2): ");
     if case_t==1
         fprintf(2,"Reachability case option\n");
-        fprintf("\t - robots are represented with red;\n");
-        fprintf("\t - regions are represented with blue (if intermediary markings are used for collision avoidance,;\n");
-        fprintf("\t\t then the already visited regions are colored with green);\n");
-        fprintf("\t - obstacles are represented with gray;\n");
+        fprintf("\t- robots are represented with red;\n");
+        fprintf("\t- regions are represented with blue (if intermediary markings are used for collision avoidance,;\n");
+        fprintf("\t\t then the visited regions according to the intermediary markings are colored with green)\n");
+        fprintf("\t - obstacles are represented with gray\n");
     elseif case_t==2
         fprintf(2,"Boolean specification option\n");
-        fprintf("\t - robots are represented with red;\n");
-        fprintf("\t - regions are represented with blue;\n");
-        fprintf("\t - obstacles are represented with gray;\n");
+        
     end
 end
 

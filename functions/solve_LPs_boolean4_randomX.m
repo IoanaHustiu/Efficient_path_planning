@@ -163,7 +163,7 @@ simulation.completeLPfixingB.sol = sol1x(nplaces+1:nplaces+ntrans);
 simulation.completeLPfixingB.cellCapacity = s;
 simulation.completeLPfixingB.iterations = iterationsX;
 
-fprintf("A number of %i robots will move in order to fulfill the Boolean specification.\n",sum(xStar));
+fprintf("\nA number of %i robots will move in order to fulfill the Boolean specification.\n",sum(xStar));
 
 if plot_animation
     fprintf(1,'\n============================================================');
