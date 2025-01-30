@@ -1,5 +1,9 @@
 # Efficient_path_planning
 
+Overview:
+This repository implements a path-planning and task assignment algorithm for very large multi-robot systems that should fulfill
+a global Boolean specification.
+
 For all the simulation, the initial positions of the robots and the environment are randomly generated.
 
 1) Execute main.m to run the primary path planning demonstration.
