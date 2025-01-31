@@ -26,9 +26,11 @@ Output: robot trajectories;
 Note: is not mandatory to have all the robots moving in order to fulfill the global specification.
 
 2) For the industrial scenario example, run smart_plant_small_example.m.
+
 Option: 1 - ILP version of the problem will be solved (it might take a while);
 	  0 - ILP version of the problem will not be solved;
 	 
+
 Scenario: 50 robots evolving in a small smart plant manufacturing;
 	Boolean specification defined over a number of 50 requests:
 		- 10 jobs type 1 - inventory inspection and monitoring (should be 100% fulfilled) - the blue cells;
