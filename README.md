@@ -1,6 +1,6 @@
 # Efficient_path_planning
 
-Overview:
+**Overview:**
 This repository implements a path-planning and task assignment algorithm for very large multi-robot systems that should fulfill
 a global Boolean specification.
 
