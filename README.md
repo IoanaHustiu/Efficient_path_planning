@@ -11,13 +11,16 @@ For all the simulation, the initial positions of the robots and the environment 
 -> (1) Reachability scenario
 
 Inputs: number of robots, number of regions;
+
 Output: robot trajectories;
 
 Note: if cell capacity (s) should be greater than 1, in order to ensure collision avoidance the problem will be solved
 using (s) intermediary markings and cell capacity will be considered equal with 1.
 
 -> (2) Boolean-based specification - the Boolean formula in CNF form is randomly generated
+
 Inputs: number of robots, number of regions;
+
 Output: robot trajectories;
 
 Note: is not mandatory to have all the robots moving in order to fulfill the global specification.
