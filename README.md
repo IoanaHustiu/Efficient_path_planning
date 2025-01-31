@@ -32,5 +32,10 @@ Scenario: 50 robots evolving in a small smart plant manufacturing;
 		- 15 jobs type 2 - hazard detection and mitigation (should be 100% fulfilled) - the cyan cells;
 		- 10 jobs type 3 - product quality control (should be at least 50% fulfilled) - the dark green cells;
 		- 15 jobs type 4 - maintenance and calibration (should be at least 75% fulfilled) - the yellow cells;
-		
-All problems are solved using intlinprog solver (for the relaxed LPs problems, intcon option is []);
+
+Simulation example:
+
+![smart_plant_small_example](https://github.com/user-attachments/assets/d8edf394-9bb8-46ac-a21c-80ff8592303a)
+
+
+All problems are solved using intlinprog solver (for the relaxed LPs problems, intcon option is [ ]);
