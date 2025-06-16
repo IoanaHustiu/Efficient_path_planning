@@ -44,3 +44,5 @@ Simulation example:
 
 
 All problems are solved using intlinprog solver (for the relaxed LPs problems, intcon option is [ ]);
+
+**Note:** All simulations were performed on a computer equipped with an Intel Xeon Gold 6240 CPU at 2.60GHz and 1 TB RAM. Different perfomances may be obtained with different specifications.
