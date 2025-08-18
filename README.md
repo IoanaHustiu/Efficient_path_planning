@@ -56,6 +56,6 @@ Note: 1) if cell capacity (s) should be greater than 1, in order to ensure colli
 
 All problems are solved using intlinprog solver (for the relaxed LPs problems, intcon option is [ ], meaning that no variable is imposed to be integer);
 
-**Note:** All simulations were performed on a computer equipped with an Intel Xeon Gold 6240 CPU at 2.60GHz and 1 TB RAM. Different perfomances may be obtained with different specifications.
+**Note:** All simulations were performed on a computer equipped with an AMD Ryzen 9 9950X 16 CPU and 64 GB RAM. Different perfomances may be obtained with different specifications.
 
 [1] Stern, R., Sturtevant, N., Felner, A., Koenig, S., Ma, H., Walker, T., Li, J., Atzmon, D., Cohen, L., Kumar, T.K. and Barták, R., 2019. Multi-agent pathfinding: Definitions, variants, and benchmarks. In Proceedings of the International Symposium on Combinatorial Search (Vol. 10, No. 1, pp. 151-158).
