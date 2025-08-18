@@ -33,7 +33,7 @@ Note: 1) if cell capacity (s) should be greater than 1, in order to ensure colli
 3) The user can choose if the Integer Linear Programming (ILP) formulation will be also solved. This might take a while for large teams of mobile agents. 
 4) It is not mandatory to have all the robots moving in order to fulfill the global specification.
 
-3) main_map_smart_plant.m is for the **smart manufacturing plant scenario** (number of regions to be reached is not necessarily equal with the number of robots; for this simulations the environment and the boolean formula, together with the initial and final positions of the robots are randomly generated);
+4) main_map_smart_plant.m is for the **smart manufacturing plant scenario** (number of regions to be reached is not necessarily equal with the number of robots; for this simulations the environment and the boolean formula, together with the initial and final positions of the robots are randomly generated);
 
 Inputs: number of robots, number of regions;
 Output: robot trajectories;
