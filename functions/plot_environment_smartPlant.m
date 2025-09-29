@@ -33,7 +33,7 @@ for i=1:length(obstacles) %obstacles
 end
 
 C=cells;
-% represent cells:
+%represent cells:
 for i=1:length(C)
     fill(C{i}(1,:),C{i}(2,:),'w','FaceAlpha',0.5);
 end

@@ -8,7 +8,7 @@ addpath(['.' filesep 'functions']);
 fprintf(1,"==========================================================================================");
 fprintf(1,"\nEfficient path planning method for task allocation algorithm for Boolean specifications\n");
 fprintf(1,"==========================================================================================\n");
-fprintf(1,"main program for smart plant scenario\n");
+fprintf(1,"Main program for smart plant scenario\n");
 fprintf("The initial positions of the robots and the environment are randomly generated.\n");
 
 fprintf("\t - initial positions of the robots are represented with red triangles;\n");
@@ -16,7 +16,7 @@ fprintf("\t - regions are represented with yellow diamonds;\n");
 fprintf("\t - obstacles are represented with black;\n");
 
 obs_size = 1;
-N_r = 50; %number of robots
+N_r = 20; %number of robots
 % N_r = input("number of robots: "); %number of robots
 map = [N_r N_r];
 
@@ -24,10 +24,10 @@ plot_animation = input("Do you want to plot the environment and the trajectories
 
 flag_ILP = input("Do you want to solve also the ILP formulation? This might take a while... (1 - yes, 0 - no)\n");
 
-nj1 = 10; %jobs type1
-nj2 = 15; %jobs type2
-nj3 = 10; %jobs type3
-nj4 = 15; %jobs type4
+nj1 = 2; %jobs type1
+nj2 = 2; %jobs type2
+nj3 = 2; %jobs type3
+nj4 = 4; %jobs type4
 N_p = nj1 + nj2 + nj3 + nj4; %manufacturing plant
 
 fprintf("Number of robots: %i\n",N_r);

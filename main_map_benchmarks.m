@@ -88,7 +88,8 @@ for exp=1:n_exp
     flag = 0;
     while flag==0
         selS = randperm(numel(validStarts), N_r);
-        selG = randperm(numel(validGoals),  N_r);
+        goals = setdiff(validGoals,validStarts(selS)); %startSamples != goalSamples
+        selG = randperm(numel(goals),  N_r);
         startSamples = validStarts(selS);
         goalSamples  = validGoals(selG);
 

@@ -46,12 +46,12 @@ try
     time_LP2 = toc;
 
     if time_LP2>3600
-        fprintf('Solving the first (MILP) problem lasts more than 3600 seconds!\n');
+        fprintf('Solving the second (LP) problem lasts more than 3600 seconds!\n');
         LPIM.exitflag = 3600;
     end
 
     if (exitflag2 ~= 1)
-        fprintf(1,'Error solving second LP for %d intermediate markings! Increment the number of intermediate markings.\n',num_intermediate);
+        fprintf(1,'Error solving second LP with %d intermediate markings! Increment the number of intermediate markings.\n',num_intermediate);
         LPIM.exitflag = exitflag2;
         % return;
     else

@@ -28,7 +28,7 @@ flag_ILP = input("Do you want to solve also the ILP formulation? This might take
 
 %%
 for exp=1:n_exp
-    fprintf(2,"\nExperiment number %i (%i robots)\n",exp,N_r);
+    fprintf(1,"\nExperiment number %i (%i robots)\n",exp,N_r);
 
     if mod(exp-1,10)==0
         map_size      = [map(1),map(2),round(0.25*map(1)*map(2))];
@@ -113,6 +113,9 @@ for exp=1:n_exp
     sim(exp).mf    = mf;
     sim(exp).T     = T;
     sim(exp).success = flag;
+
+    save(sprintf('simulations_reachability_%drobots.mat', N_r), 'sim', '-v7.3');
+    clear sim;
 end
 
 % save(sprintf('simulations_reachability_%drobots.mat', N_r), 'sim', '-v7.3');

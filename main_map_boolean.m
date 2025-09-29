@@ -28,34 +28,56 @@ flag_ILP = input("Do you want to solve also the ILP formulation? This might take
 
 %%
 for exp=1:n_exp
-    fprintf(2,"\nExperiment number %i (%i robots)\n",exp,N_r);
+    fprintf(1,"\nExperiment number %i (%i robots)\n",exp,N_r);
 
     if mod(exp-1,10)==0
-        map_size = [map(1),map(2),round(0.25*map(1)*map(2))];
+        map_size = [map(1),map(2),round(0.15*map(1)*map(2))];
+
+        %Generate Boolean goal
+        i = 3;
+        el = randi([0 i],1,N_r);
+        sum_el = [0 cumsum(el)];
+
+        N_p = N_r + sum(el);
+
+        At = zeros(N_r,N_r+sum(el));
+        bt = -ones(N_r,1);
+        At(:,1:N_r) = -eye(N_r);
+
+        for j=1:N_r
+            if el(j)>0
+                At(j,N_r+sum_el(j)+1:N_r+sum_el(j)+el(j)) = -ones(1,el(j));
+            end
+        end
+
+        component_sizes = 0;
+        idx = 1;
 
         %
-        T = grid_decomposition_regions_environment(map_size, obs_size);
-        env_limit  = size(T.map2D,1);
+        while component_sizes(idx) < N_r + N_p
+            T = grid_decomposition_regions_environment(map_size, obs_size);
+            env_limit  = size(T.map2D,1);
 
-        fullAdj = T.adj;
-        freeMask = true(size(fullAdj,1),1);
-        freeMask(T.obstacles) = false;
-        adj = fullAdj(freeMask,freeMask);
+            fullAdj = T.adj;
+            freeMask = true(size(fullAdj,1),1);
+            freeMask(T.obstacles) = false;
+            adj = fullAdj(freeMask,freeMask);
 
-        [Pre,Post] = construct_PN(adj);
+            [Pre,Post] = construct_PN(adj);
 
-        invMap = zeros(numel(freeMask),1);
-        invMap(T.rem_cell) = 1:numel(T.rem_cell);
+            invMap = zeros(numel(freeMask),1);
+            invMap(T.rem_cell) = 1:numel(T.rem_cell);
 
-        %
-        % Find connected components (4-connectivity)
-        CC = bwconncomp(full(T.map2D), 4);
+            %
+            % Find connected components (4-connectivity)
+            CC = bwconncomp(full(T.map2D), 4);
 
-        % Get sizes of each component
-        component_sizes = cellfun(@numel, CC.PixelIdxList);
+            % Get sizes of each component
+            component_sizes = cellfun(@numel, CC.PixelIdxList);
 
-        % Find index of the largest component
-        [~, idx] = max(component_sizes);
+            % Find index of the largest component
+            [~, idx] = max(component_sizes);
+        end
 
         % Get the set of linear indices for that component
         largest_component_indices = CC.PixelIdxList{idx};
@@ -70,30 +92,6 @@ for exp=1:n_exp
 
         validStarts = unique(linStartAll(maskBoth));
         validGoals  = unique(linGoalAll(maskBoth));
-
-        % if numel(validStarts) < max(R) || numel(validGoals) < max(R)
-        %     error('Insuficientes celdas únicas libres: starts=%d, goals=%d, maxNeeded=%d', ...
-        %         numel(validStarts), numel(validGoals), max(R));
-        % end
-
-        N_p = randi([round(0.75*N_r),round(1.25*N_r)]);
-        N_c = N_p;
-
-        %Generate Boolean goal
-        At = -true(N_c,N_p);  % Start with all -1
-        % Randomly choose indices to set to 0
-        k = randi([1,N_c * N_p]);
-        idx = randperm(N_c * N_p, k);
-        At(idx) = 0;
-
-        At = unique(At,'rows','stable'); %eliminate duplicate rows
-        At = At(~all(At==0,2),:); %eliminate rows containing only entries equal with 0
-        N_c = size(At,1); %update the number of conjunctions (if necessary)
-        cols_all_zero = all(At == 0, 1);  % Logical row vector: 1 if entire column is zeros
-        zero_col_ind = find(cols_all_zero);
-        At(randi([1,N_c],1,length(zero_col_ind)),zero_col_ind) = -1;
-
-        bt = (sum(At' == 1)-1)';
     end
 
     success = 0;
@@ -101,8 +99,8 @@ for exp=1:n_exp
 
     while flag==0
         selS = randperm(numel(validStarts), N_r);
-        validGoals = setdiff(validGoals,validStarts(selS)); %startSamples != goalSamples
-        selG = randperm(numel(validGoals),  N_p);
+        goals = setdiff(validGoals,validStarts(selS)); %startSamples != goalSamples
+        selG = randperm(numel(goals),  N_p);
         startSamples = validStarts(selS);
         goalSamples  = validGoals(selG);
 
@@ -131,6 +129,9 @@ for exp=1:n_exp
     sim(exp).m0    = m0;
     sim(exp).T     = T;
     sim(exp).success = flag;
+
+    save(sprintf('simulations_boolean_%drobots.mat', N_r), 'sim', '-v7.3');
+    clear sim;
 end
 
 % success_rate = success / n_exp * 100;

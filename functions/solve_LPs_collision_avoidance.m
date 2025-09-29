@@ -40,7 +40,7 @@ if MILP1.exitflag~=1
         flag = 0;
         return;
     elseif MILP1.exitflag~=3600
-        fprintf('Unfeasible problem - exitflag MILP ~= 1.\n');
+        fprintf('Unfeasible problem - exitflag LP1 ~= 1.\n');
         flag = 0;
         return;
     else
@@ -62,15 +62,22 @@ simulation.completeLP.cellCapacity = MILP1.sol(end);
 %check if the cell capacity is equal with 1
 if norm(s - 1) < 1000*eps %cell capacity is 1 and collision avoidance is not required
     fprintf('Cell capacity is equal with 1. No collision avoidance is necessary!\n');
+
+    fprintf(1,'\n============================================================');
+    fprintf(1,'\n    Solution for LP1 obtained using intlinprog solver ');
+    fprintf(1,'\n============================================================');
+    fprintf(1,'\nSolution for LP1 found in %f [secs].',MILP1.runtime);
+    fprintf(1,'\nOptimal solution for LP1 = %s',num2str(MILP1.cost));
+    fprintf(1,'\nInfinite norm for LP1 of Post * sigma = %s',num2str(MILP1.sol(end)));
 end
 
-if plot_animation
+if s > 1
     fprintf(1,'\n============================================================');
-    fprintf(1,'\n    Solution for MILP obtained using intlinprog solver ');
+    fprintf(1,'\n    Solution for LP1 obtained using intlinprog solver ');
     fprintf(1,'\n============================================================');
-    fprintf(1,'\nSolution for the first MILP found in %f [secs].',MILP1.runtime);
-    fprintf(1,'\nOptimal solution for the first MILP = %s',num2str(MILP1.cost));
-    fprintf(1,'\nInfinite norm for the first MILP of Post * sigma = %s',num2str(MILP1.sol(end)));
+    fprintf(1,'\nSolution for LP1 found in %f [secs].',MILP1.runtime);
+    fprintf(1,'\nOptimal solution for LP1 = %s',num2str(MILP1.cost));
+    fprintf(1,'\nInfinite norm for LP1 of Post * sigma = %s',num2str(MILP1.sol(end)));
     %solve the problem with intermediate markings
     fprintf(1,'\n\n=============================================');
     fprintf(1,'\n           Start solving second problem...');
@@ -152,8 +159,6 @@ if num_intermediate > 1
         simulation.interLP.cost = simulation.interLP.cost + sum(LPIM.sol((i-1)*(nplaces+ntrans) + 1 + nplaces:i*(nplaces+ntrans)));
         if flag_ILP
             simulation.ILPIM.cost = simulation.ILPIM.cost + sum(ILPIM.sol((i-1)*(nplaces+ntrans) + 1 + nplaces:i*(nplaces+ntrans)));
-        else
-            simulation.ILPIM.cost = 0;
         end
     end
 else
@@ -173,7 +178,7 @@ end
 
 fprintf(1,'\nSolution LP2 found in %f [secs].',simulation.interLP.runtime);
 fprintf(1,'\nOptimal value LP2 = %s\n',num2str(simulation.interLP.cost));
-fprintf(1,'\nTotal time for solution MILP+LP: %f [sec].',simulation.completeLP.runtime+simulation.interLP.runtime);
+fprintf(1,'\nTotal time for solution LP1+LP2: %f [sec].',simulation.completeLP.runtime+simulation.interLP.runtime);
 
 if flag_ILP
     fprintf(1,'\nTotal time for solution ILP1+ILP2 with intermediary markings: %f [sec].',simulation.completeILP.runtime+simulation.ILPIM.runtime);
@@ -191,7 +196,7 @@ if plot_animation
         end
         %figure;
         plot_environment(T.rem_cell(find(current_marking)),T.rem_cell(T.props),T.map2D,env_limit,T.Vert); 
-        title(sprintf('Efficient path planning (MILP + LP): iteration %d',i));
+        title(sprintf('Efficient path planning (LP1 + LP2): iteration %d',i));
         hold on;
 
         if num_intermediate == 1
