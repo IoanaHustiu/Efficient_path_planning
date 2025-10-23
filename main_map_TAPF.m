@@ -71,41 +71,36 @@ for exp=1:n_exp
         validStarts = unique(linStartAll(maskBoth));
         validGoals  = unique(linGoalAll(maskBoth));
 
-        % if numel(validStarts) < max(R) || numel(validGoals) < max(R)
-        %     error('Insuficientes celdas únicas libres: starts=%d, goals=%d, maxNeeded=%d', ...
-        %         numel(validStarts), numel(validGoals), max(R));
-        % end
     end
 
     success = 0;
-    flag = 0;
-    while flag==0
-        selS = randperm(numel(validStarts), N_r);
-        selG = randperm(numel(validGoals),  N_r);
-        startSamples = validStarts(selS);
-        goalSamples  = validGoals(selG);
 
-        startIdx = invMap(startSamples);
-        goalIdx  = invMap(goalSamples);
+    selS = randperm(numel(validStarts), N_r);
+    goals = setdiff(validGoals,validStarts(selS)); %startSamples != goalSamples
+    selG = randperm(numel(goals),  N_r);
+    startSamples = validStarts(selS);
+    goalSamples  = goals(selG);
 
-        assert(numel(unique(startIdx))==N_r, 'Duplicado en startIdx');
-        assert(numel(unique(goalIdx ))==N_r, 'Duplicado en goalIdx');
+    startIdx = invMap(startSamples);
+    goalIdx  = invMap(goalSamples);
 
-        m0 = zeros(size(Pre,1),1);
-        m0(startIdx) = 1;
-        mf = zeros(size(Pre,1),1);
-        mf(goalIdx)  = 1;
+    assert(numel(unique(startIdx))==N_r, 'Duplicado en startIdx');
+    assert(numel(unique(goalIdx ))==N_r, 'Duplicado en goalIdx');
 
-        T.props = goalIdx;
+    m0 = zeros(size(Pre,1),1);
+    m0(startIdx) = 1;
+    mf = zeros(size(Pre,1),1);
+    mf(goalIdx)  = 1;
 
-        if plot_animation
-            plot_environment(startSamples, goalSamples, T.map2D, env_limit, T.Vert);
-            title(sprintf('Start/Goal for %d robots', N_r));
-        end
+    T.props = goalIdx;
 
-        [optVal, flag] = solve_LPs_collision_avoidance(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
-        if flag, success = success + 1; end
+    if plot_animation
+        plot_environment(startSamples, goalSamples, T.map2D, env_limit, T.Vert);
+        title(sprintf('Start/Goal for %d robots', N_r));
     end
+
+    [optVal, flag] = solve_LPs_collision_avoidance(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
+    if flag, success = success + 1; end
 
     sim(exp).optim = optVal;
     sim(exp).flag  = flag;
@@ -113,9 +108,6 @@ for exp=1:n_exp
     sim(exp).mf    = mf;
     sim(exp).T     = T;
     sim(exp).success = flag;
-
-    save(sprintf('simulations_reachability_%drobots.mat', N_r), 'sim', '-v7.3');
-    clear sim;
 end
 
 % save(sprintf('simulations_reachability_%drobots.mat', N_r), 'sim', '-v7.3');
