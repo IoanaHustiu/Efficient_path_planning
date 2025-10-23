@@ -20,10 +20,12 @@ obs_size = 1;
 n_exp = 20; %number of experiments to be performed
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 % N_r = 100; %number of robots
-N_robots = [100 250 500 750 1000 1500]; %number of robots
+N_robots = [10 20 30 40 50 100 250 500 750 1000 1500]; %number of robots
 
-B = load_map('Paris_1_256.map');
-robotPts = loadParis256AllScens(".\maps");
+%B = load_map('Paris_1_256.map');
+%robotPts = loadParis256AllScens(".\maps");
+B = load_map('lak303d.map');
+robotPts = loadlak303dAllScens(".\maps");
 %B = load_map('lgt601d.map');
 %robotPts = loadSingleScenFile('lgt601d_map.scen');
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
