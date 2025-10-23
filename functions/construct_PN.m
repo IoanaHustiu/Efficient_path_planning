@@ -21,6 +21,6 @@ function [Pre,Post] = construct_PN(adj)
     Post = sparse(J, 1:E, 1, n, E);
     
     % Si realmente necesitas matrices densas, descomenta:
-    Pre  = full(Pre);
-    Post = full(Post);
+    %Pre  = full(Pre);
+    %Post = full(Post);
 end

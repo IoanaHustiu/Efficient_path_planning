@@ -6,7 +6,7 @@ addpath(['.' filesep 'functions']);
 
 %% parameters
 fprintf(1,"==========================================================================================");
-fprintf(1,"\nEfficient path planning method for task allocation algorithm for Boolean specifications\n");
+fprintf(1,"\nTask Allocation and Path Findings algorithm\n");
 fprintf(1,"==========================================================================================\n");
 fprintf(1,"main program for reachability case -  number of tasks is equal with the number of robots.\n");
 fprintf("The initial positions of the robots and the environment are randomly generated.\n");
