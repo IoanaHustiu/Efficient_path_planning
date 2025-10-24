@@ -16,14 +16,6 @@ function [robotPts, scenTbl] = loadSingleScenFile(scenFile)
 % Example:
 %   [robotPts, scenTbl] = loadSingleScenFile('Paris_1_256-random3.scen');
 
-    % --- Verify input ---
-    if nargin < 1 || isempty(scenFile)
-        error('You must provide a .scen file path as input.');
-    end
-    if ~isfile(scenFile)
-        error('File not found: %s', scenFile);
-    end
-
     % --- Parse file ---
     [robotPts, scenTbl] = parseMovingAIScen(scenFile);
 

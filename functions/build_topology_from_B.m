@@ -7,7 +7,7 @@ function T = build_topology_from_B(B)
 % OUTPUT (struct T):
 %   T.adj        : matriz de adyacencia (sparse, N x N) con vecindad 4 entre celdas libres
 %   T.obstacles  : índices lineales (en orden MATLAB) de celdas obstáculo (B==1)
-%   T.free       : índices lineales de celdas libres (B==0)               [info extra útil]
+%   T.rem_cell       : índices lineales de celdas libres (B==0)               [info extra útil]
 %   T.size       : [H W]                                                 [info extra útil]
 %
 % Nota: La adyacencia solo conecta pares de celdas libres (no se crean aristas a/desde obstáculos).
@@ -27,7 +27,7 @@ function T = build_topology_from_B(B)
     T = struct();
     T.size = [H, W];
     T.obstacles = find(isObstacle);
-    T.free = find(isFree);
+    T.rem_cells = find(isFree);
 
     % -----------------------------
     % Construcción de adyacencia 4-neighbors (N, S, E, O) SOLO entre libres

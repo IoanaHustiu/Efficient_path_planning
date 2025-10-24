@@ -215,14 +215,41 @@ if plot_animation
             current_marking = round(LPIM.sol((nplaces+ntrans)*(i-2)+1:(nplaces+ntrans)*(i-2)+nplaces));
         end
         %figure;
-        plot_environment(T.rem_cell(find(current_marking)),T.rem_cell(T.props),T.map2D,env_limit,T.Vert); 
+        %        plot_environment(T.rem_cells(find(current_marking)),T.rem_cells(T.props),T.map2D,env_limit,T.Vert);
+        % --- Extract indices of start and goal cells
+        start_idx = T.rem_cells(find(current_marking));  % starts: places with tokens
+        goal_idx  = T.rem_cells(T.props);               % goals: places in T.props
+
+        % --- Ensure same number of start and goal points
+        n_r = min(numel(start_idx), numel(goal_idx));
+        if n_r == 0
+            warning('No start/goal pairs to plot.');
+            return;
+        end
+        start_idx = start_idx(1:n_r);
+        goal_idx  = goal_idx(1:n_r);
+
+        % --- Convert linear indices to (row,col) then to 0-based Cartesian [x y]
+        [H, W] = size(T.map2D);
+        [start_r, start_c] = ind2sub([H, W], start_idx(1:n_r));
+        [goal_r,  goal_c ] = ind2sub([H, W], goal_idx (1:n_r));
+
+        % correct centers (x = c - 0.5  →  +0.5 for Cartesian surface alignment)
+        selectedStart = [start_c - 0.5 , start_r - 0.5 ];
+        selectedFin   = [goal_c  - 0.5 , goal_r  - 0.5 ];
+
+        % --- Plot environment with starts & goals
+        %plot_environment_new(selectedPts, T.map2D, T);
+        plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
+
         title(sprintf('Efficient path planning (LP1 + LP2): iteration %d',i));
         hold on;
 
         if num_intermediate == 1
             current_sigma = round(MILP1.sol(1:ntrans));
         else
-            current_sigma = round(LPIM.sol((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans));
+            base = (nplaces+ntrans)*(i-1);
+            current_sigma = round(LPIM.sol(base + nplaces + (1:ntrans)));
         end
 
         try
@@ -235,18 +262,40 @@ if plot_animation
             flag = 0;
             return;
         end
-        for j = 1 : length(Rob_places)
+        nR = numel(Rob_places);
+        if nR == 0
+            continue;
+        end
+        % Asegura suficientes colores
+        if size(rob_color,1) < nR
+            rob_color = hsv(nR);
+        end
+        % Dibuja cada trayectoria
+        for j = 1:nR
             traj = Rob_places{j};
-            for k = 1 : length(traj)-1
-                plot([T.centr{T.rem_cell(traj(k))}(1) T.centr{T.rem_cell(traj(k+1))}(1)],...
-                    [T.centr{T.rem_cell(traj(k))}(2) T.centr{T.rem_cell(traj(k+1))}(2)],'-','LineWidth',1,'Color',rob_color(j,:));
-            end
-            if (length(traj) > 1)
-               init = T.centr{T.rem_cell(traj(1))};
-               fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
-               init = T.centr{T.rem_cell(traj(end))};
-               fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
-            end
+            XY = places2xy(traj, T);        % Nx2 con [x y] de cada lugar
+
+            % Línea de la trayectoria
+            plot(XY(:,1), XY(:,2), '-', 'LineWidth', 1.5, 'Color', rob_color(j,:));
+
+            % Marcadores inicio/fin
+            c_start = XY(1,:);
+            c_goal  = XY(end,:);
+            scatter(c_start(1), c_start(2), 36, rob_color(j,:), '^', 'filled', 'MarkerEdgeColor',rob_color(j,:));  % inicio
+            scatter(c_goal(1),  c_goal(2),  36, rob_color(j,:), 'd', 'filled', 'MarkerEdgeColor',rob_color(j,:));  % fin
+        end
+        %for j = 1 : length(Rob_places)
+        %    traj = Rob_places{j};
+        %    for k = 1 : length(traj)-1
+        %        plot([T.centr{T.rem_cells(traj(k))}(1) T.centr{T.rem_cells(traj(k+1))}(1)],...
+        %            [T.centr{T.rem_cells(traj(k))}(2) T.centr{T.rem_cells(traj(k+1))}(2)],'-','LineWidth',1,'Color',rob_color(j,:));
+        %    end
+        %    if (length(traj) > 1)
+        %       init = T.centr{T.rem_cells(traj(1))};
+        %       fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
+        %       init = T.centr{T.rem_cells(traj(end))};
+        %       fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
+        %    end
             %final destinations already reached
             % intersectt = intersect(traj(end),find(mf));
             % if ~isempty(intersectt)
@@ -259,66 +308,66 @@ if plot_animation
             %     y = c(2) + r*sin(theta);
             %     plot(x, y, 'g-', 'LineWidth', 2);
             % end
-        end
+        %end
     end
 
-    if flag_ILP
-        rob_color = hsv(sum(m0));
-
-        for i = 1 : num_intermediate
-            if (i == 1)
-                current_marking = m0;
-            else
-                current_marking = round(ILPIM.sol((nplaces+ntrans)*(i-2)+1:(nplaces+ntrans)*(i-2)+nplaces));
-            end
-            %figure;
-            plot_environment(T.rem_cell(find(current_marking)),T.rem_cell(T.props),T.map2D,env_limit,T.Vert);
-            title(sprintf('ILP formulation: iteration %d',i));
-            hold on;
-
-            if num_intermediate == 1
-                current_sigma = round(ILP1.sol(1:ntrans));
-            else
-                current_sigma = round(ILPIM.sol((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans));
-            end
-
-            try
-                [feasible_sigma, Rob_places, ~, ~] = sigma2trajectories(Pre,Post,current_marking,current_sigma,find(current_marking));
-                if ~feasible_sigma
-                    error('something wrong happened!');
-                end
-            catch
-                warning('something wrong happened!');
-                flag = 0;
-                return;
-            end
-
-            for j = 1 : length(Rob_places)
-                traj = Rob_places{j};
-                for k = 1 : length(traj)-1
-                    plot([T.centr{T.rem_cell(traj(k))}(1) T.centr{T.rem_cell(traj(k+1))}(1)],...
-                        [T.centr{T.rem_cell(traj(k))}(2) T.centr{T.rem_cell(traj(k+1))}(2)],'-','LineWidth',1,'Color',rob_color(j,:));
-                end
-                if (length(traj) > 1)
-                    init = T.centr{T.rem_cell(traj(1))};
-                    fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
-                    init = T.centr{T.rem_cell(traj(end))};
-                    fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
-                end
-                %final destinations already reached
-                % intersectt = intersect(traj(end),find(mf));
-                % if ~isempty(intersectt)
-                %     reached = T.centr{T.rem_cell(intersectt)};
-                %     %text(reached(1), reached(2), 'X', 'HorizontalAlignment','center','FontSize',12);
-                %     c = reached;
-                %     theta = linspace(0,2*pi,64);
-                %     r = 1;
-                %     x = c(1) + r*cos(theta);
-                %     y = c(2) + r*sin(theta);
-                %     plot(x, y, 'g-', 'LineWidth', 2);
-                % end
-            end
-        end
-    end
+    % if flag_ILP
+    %     rob_color = hsv(sum(m0));
+    % 
+    %     for i = 1 : num_intermediate
+    %         if (i == 1)
+    %             current_marking = m0;
+    %         else
+    %             current_marking = round(ILPIM.sol((nplaces+ntrans)*(i-2)+1:(nplaces+ntrans)*(i-2)+nplaces));
+    %         end
+    %         %figure;
+    %         plot_environment(T.rem_cells(find(current_marking)),T.rem_cells(T.props),T.map2D,env_limit,T.Vert);
+    %         title(sprintf('ILP formulation: iteration %d',i));
+    %         hold on;
+    % 
+    %         if num_intermediate == 1
+    %             current_sigma = round(ILP1.sol(1:ntrans));
+    %         else
+    %             current_sigma = round(ILPIM.sol((nplaces+ntrans)*(i-1) + nplaces + 1 : (nplaces+ntrans)*(i-1) + nplaces + ntrans));
+    %         end
+    % 
+    %         try
+    %             [feasible_sigma, Rob_places, ~, ~] = sigma2trajectories(Pre,Post,current_marking,current_sigma,find(current_marking));
+    %             if ~feasible_sigma
+    %                 error('something wrong happened!');
+    %             end
+    %         catch
+    %             warning('something wrong happened!');
+    %             flag = 0;
+    %             return;
+    %         end
+    % 
+    %         for j = 1 : length(Rob_places)
+    %             traj = Rob_places{j};
+    %             for k = 1 : length(traj)-1
+    %                 plot([T.centr{T.rem_cells(traj(k))}(1) T.centr{T.rem_cells(traj(k+1))}(1)],...
+    %                     [T.centr{T.rem_cells(traj(k))}(2) T.centr{T.rem_cells(traj(k+1))}(2)],'-','LineWidth',1,'Color',rob_color(j,:));
+    %             end
+    %             if (length(traj) > 1)
+    %                 init = T.centr{T.rem_cells(traj(1))};
+    %                 fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
+    %                 init = T.centr{T.rem_cells(traj(end))};
+    %                 fill([init(1)-0.5 init(1)+0.5 init(1)+0.5 init(1)-0.5],[init(2)-0.5 init(2)-0.5 init(2)+0.5 init(2)+0.5],rob_color(j,:),'EdgeColor','none');
+    %             end
+    %             %final destinations already reached
+    %             % intersectt = intersect(traj(end),find(mf));
+    %             % if ~isempty(intersectt)
+    %             %     reached = T.centr{T.rem_cell(intersectt)};
+    %             %     %text(reached(1), reached(2), 'X', 'HorizontalAlignment','center','FontSize',12);
+    %             %     c = reached;
+    %             %     theta = linspace(0,2*pi,64);
+    %             %     r = 1;
+    %             %     x = c(1) + r*cos(theta);
+    %             %     y = c(2) + r*sin(theta);
+    %             %     plot(x, y, 'g-', 'LineWidth', 2);
+    %             % end
+    %         end
+    %     end
+    % end
 
 end

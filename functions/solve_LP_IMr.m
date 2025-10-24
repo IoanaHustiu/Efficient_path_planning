@@ -17,7 +17,7 @@ try
     bloque=[-eye(nplaces) zeros(nplaces,ntrans) eye(nplaces) -C];
     bloque2=[eye(nplaces) zeros(nplaces,ntrans+nplaces) Post];
     for i = 2 : num_intermediate
-        f2 = [f2 zeros(1,nplaces) (num_intermediate - i + 2)*10*sum(m0)*ones(1,ntrans)];
+        f2 = [f2 zeros(1,nplaces) (num_intermediate - i + 2)*100*sum(m0)*ones(1,ntrans)];
         % add state equation
         Aeq2((i-1)*(nplaces)+1: i*nplaces, (i-2)*(nplaces+ntrans)+ 1 : i*(nplaces+ntrans)) = bloque;
         beq2 = [beq2; zeros(nplaces,1)];

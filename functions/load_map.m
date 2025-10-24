@@ -56,7 +56,7 @@ for r = 1:H
     if numel(rowStr) ~= W
         error('Inconsistent row width at row %d', r);
     end
-    B(r, :) = uint8(rowStr == '@');
+    B(r, :) = uint8(rowStr == '@' | rowStr == 'T');
 end
 end
 

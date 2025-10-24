@@ -7,7 +7,8 @@ addpath(['.' filesep 'maps']);
 
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 n_exp = 20; %number of experiments to be performed
-N_robots = [10 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
+%N_robots = [500 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
+N_robots = [50 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
 
 %B = load_map('Paris_1_256.map');
 %[robotPts, scenTbl] = loadAllScens('Paris_1_256-random-.scen', 25);
@@ -23,13 +24,8 @@ N_robots = [10 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 30
 %B = load_map('maze-128-128-10.map');
 %[robotPts, scenTbl] = loadAllScens('maze-128-128-10-random-.scen', 25);
 
-%B = load_map('warehouse-10-20-10-2-1.map');
-%[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
-
-B = load_map('ht_chantry.map');
-[robotPts, ~] = loadAllScens('ht_chantry-random-.scen', 25);
-[robotPts2, ~] = loadAllScens('ht_chantry-even-.scen', 25);
-robotPts = [robotPts; robotPts2];
+B = load_map('warehouse-10-20-10-2-1.map');
+[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
 
 %plot_map(B);
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
@@ -42,30 +38,41 @@ for i = 1:numel(robotPts)
     robotPts{i} = p;
 end
 
-% 1) Convertir todo de golpe a una matriz 2×(2N)
-M = cell2mat(robotPts.');   % transponer a 1×N para concatenar horizontalmente
 
-% 2) Separar inicios y finales (cada par de columnas es [x y])
-starts = [ M(1,1:2:end).',  M(1,2:2:end).' ];   % N×2  [xS yS]
-goals  = [ M(2,1:2:end).',  M(2,2:2:end).' ];   % N×2  [xG yG]
 
-% (opcional) Forzar enteros si procede:
-% starts = round(starts); goals = round(goals);
+% robotPts es un cell array, cada celda contiene una matriz 2x2:
+% [x_start y_start;
+%  x_goal  y_goal]
 
-% 3) Quitar filas con NaN/Inf (por seguridad)
-starts = starts(all(isfinite(starts),2), :);
-goals  = goals (all(isfinite(goals ),2), :);
+% --- Extrae todos los puntos de inicio y final
+starts = cellfun(@(p) p(1,:), robotPts, 'UniformOutput', false);
+goals  = cellfun(@(p) p(2,:), robotPts, 'UniformOutput', false);
 
-% 4) Eliminar duplicados manteniendo el orden de aparición
-[starts_u, iaS] = unique(starts, 'rows', 'stable');
-[goals_u,  iaG] = unique(goals,  'rows', 'stable');
+starts = vertcat(starts{:});
+goals  = vertcat(goals{:});
 
-% 5) Volver a cell {K×1} con cada fila [x y]
-initPts = mat2cell(starts_u, ones(size(starts_u,1),1), 2);
-goalPts = mat2cell(goals_u,  ones(size(goals_u,1),1), 2);
+% --- Asegurar que no hay puntos repetidos
+[~, ia] = unique(initPts_all, 'rows');
+initPts = num2cell(initPts_all(ia, :), 2);
+
+[~, ig] = unique(goalPts_all, 'rows');
+goalPts = num2cell(goalPts_all(ig, :), 2);
+
+% --- Eliminar solapamiento entre conjuntos (por si acaso)
+initMat = vertcat(initPts{:});
+goalMat = vertcat(goalPts{:});
+
+[~, ia] = setdiff(initMat, goalMat, 'rows', 'stable');
+[~, ig] = setdiff(goalMat, initMat, 'rows', 'stable');
+
+initPts = initPts(ia);
+goalPts = goalPts(ig);
 
 fprintf('Generated %d unique initial points and %d unique final points.\n', ...
         numel(initPts), numel(goalPts));
+
+
+
 
 % Flip B vertically to match Cartesian coordinates
 B = flipud(B);
@@ -86,7 +93,7 @@ for k = 1:numel(freeIdx)
     T.centr{k} = [c - 0.5, r - 0.5];   % <-- center, not corner
 end
 
-%plot_environment_new([], T.map2D, T)
+plot_environment_new([], T.map2D, T)
 
 
 % Subgraph on free cells (sparse, binary, symmetric, zero-diagonal)
@@ -106,7 +113,7 @@ invMap(freeIdx) = 1:numel(freeIdx);
 fwdMap          = freeIdx;                       % reduced -> original (linear index in B)
 
 
-plot_animation = 0;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
+plot_animation = 1;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
 
 flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might take a while... (1 - yes, 0 - no)\n");
 
@@ -212,6 +219,11 @@ for i = 1:numel(robotPts)
 end
 
 
+
+% robotPts es un cell array, cada celda contiene una matriz 2x2:
+% [x_start y_start;
+%  x_goal  y_goal]
+
 % --- Extrae todos los puntos de inicio y final
 starts = cellfun(@(p) p(1,:), robotPts, 'UniformOutput', false);
 goals  = cellfun(@(p) p(2,:), robotPts, 'UniformOutput', false);
@@ -247,6 +259,9 @@ goalPts = goalPts(ig);
 fprintf('Generated %d unique initial points and %d unique final points.\n', ...
         numel(initPts), numel(goalPts));
 
+
+
+
 % Flip B vertically to match Cartesian coordinates
 B = flipud(B);
 
@@ -266,7 +281,8 @@ for k = 1:numel(freeIdx)
     T.centr{k} = [c - 0.5, r - 0.5];   % <-- center, not corner
 end
 
-%plot_environment_new([], T.map2D, T)
+plot_environment_new([], T.map2D, T)
+
 
 % Subgraph on free cells (sparse, binary, symmetric, zero-diagonal)
 adj = spones(fullAdj(freeIdx, freeIdx));         % ensure 0/1
@@ -285,7 +301,7 @@ invMap(freeIdx) = 1:numel(freeIdx);
 fwdMap          = freeIdx;                       % reduced -> original (linear index in B)
 
 
-plot_animation = 0;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
+plot_animation = 1;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
 
 flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might take a while... (1 - yes, 0 - no)\n");
 
@@ -321,6 +337,7 @@ for i = 1 : numel(N_robots)
         T.props = idxGoal;
 
         if plot_animation
+           %plot_environment_new(selectedPts, T.map2D, T);
            plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
         end
 
