@@ -191,11 +191,11 @@ end
 if (num_intermediate > 1)
     fprintf(1,'\nSolution LP2 found in %f [secs].',simulation.interLP.runtime);
     fprintf(1,'\nOptimal value LP2 = %s\n',num2str(simulation.interLP.cost));
-    fprintf(1,'Total time for solution LP1+LP2: %f [sec].\n',simulation.completeLP.runtime+simulation.interLP.runtime);
+    fprintf(1,'\nTotal time for solution LP1+LP2: %f [sec].',simulation.completeLP.runtime+simulation.interLP.runtime);
     if flag_ILP
-        fprintf(1,'\nSolution IP2 found in %f [secs].',simulation.ILPIM.runtime);
-        fprintf(1,'\nOptimal value IP2 = %s\n',num2str(simulation.ILPIM.cost));
-        fprintf(1,'Total time for solution ILP1+ILP2: %f [sec].\n',simulation.completeILP.runtime+simulation.ILPIM.runtime);
+    fprintf(1,'\nSolution LP2 found in %f [secs].',simulation.interLP.runtime);
+    fprintf(1,'\nOptimal value LP2 = %s\n',num2str(simulation.interLP.cost));
+        fprintf(1,'\nTotal time for solution ILP1+ILP2: %f [sec].',simulation.completeILP.runtime+simulation.ILPIM.runtime);
     end
 else
     fprintf(1,'\nTotal time for solution LP1: %f [sec].',simulation.completeLP.runtime+simulation.interLP.runtime);

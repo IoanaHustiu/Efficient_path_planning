@@ -16,18 +16,28 @@ fprintf("\t - initial positions of the robots are represented with red triangles
 fprintf("\t - regions are represented with yellow diamonds;\n");
 fprintf("\t - obstacles are represented with black;\n");
 
-obs_size = 1;
-n_exp = 20; %number of experiments to be performed
 %n_exp = input("number of experiments: "); %number of experiments to be performed
-% N_r = 100; %number of robots
-N_robots = [10 20 30 40 50 100 250 500 750 1000 1500]; %number of robots
+n_exp = 20; %number of experiments to be performed
+N_robots = [10 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
 
 %B = load_map('Paris_1_256.map');
+%[robotPts, scenTbl] = loadAllScens('Paris_1_256-random-.scen', 25);
 %robotPts = loadParis256AllScens(".\maps");
-B = load_map('lak303d.map');
-robotPts = loadlak303dAllScens(".\maps");
+%B = load_map('lak303d.map');
+%robotPts = loadlak303dAllScens(".\maps");
 %B = load_map('lgt601d.map');
 %robotPts = loadSingleScenFile('lgt601d_map.scen');
+
+%B = load_map('lak201d.map');
+%robotPts = loadSingleScenFile('lak201d.map.scen');
+
+%B = load_map('maze-128-128-10.map');
+%[robotPts, scenTbl] = loadAllScens('maze-128-128-10-random-.scen', 25);
+
+B = load_map('warehouse-10-20-10-2-1.map');
+[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
+
+
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
 [H, W] = size(B);
 
@@ -82,7 +92,7 @@ for i = 1 : numel(N_robots)
     end
     success = 0; % Initialize success counter for the current number of robots
     for exp=1:n_exp
-        fprintf(1,"\n=======================================\n");
+        fprintf(1,"\n\n=======================================\n");
         fprintf(1,"Experiment number %i (%i robots)\n",exp,N_r);
         fprintf(1,"=======================================\n");
         %% --- Randomly select N_r start/goal pairs ---
