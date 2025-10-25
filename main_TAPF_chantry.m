@@ -5,34 +5,14 @@ clc;
 addpath(['.' filesep 'functions']);
 addpath(['.' filesep 'maps']);
 
-% Ask for the number of experiments
-n_exp = input('Number of experiments to be performed: ');
+%n_exp = input("number of experiments: "); %number of experiments to be performed
+n_exp = 1; %number of experiments to be performed
+N_robots = [30 ]; %number of robots for experiments
 
-% Explain to the user how to input the vector
-fprintf('Input a vector [n1 n2 n3 ...] with the number of robots for each experiment.\n');
-fprintf('Example: [10 20 30 40 50 100]\n');
-
-% Ask for the vector of robot counts
-N_robots = input('Vector with number of robots for experiments: ');
-
-fprintf(1,'Paris_1_256.map will be used.\n');
-
-B = load_map('Paris_1_256.map');
-[robotPts, scenTbl] = loadAllScens('Paris_1_256-random-.scen', 25);
-
-%B = load_map('lak303d.map');
-%robotPts = loadlak303dAllScens(".\maps");
-%B = load_map('lgt601d.map');
-%robotPts = loadSingleScenFile('lgt601d_map.scen');
-
-%B = load_map('lak201d.map');
-%robotPts = loadSingleScenFile('lak201d.map.scen');
-
-%B = load_map('maze-128-128-10.map');
-%[robotPts, scenTbl] = loadAllScens('maze-128-128-10-random-.scen', 25);
-
-%B = load_map('warehouse-10-20-10-2-1.map');
-%[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
+B = load_map('ht_chantry.map');
+[robotPts, ~] = loadAllScens('ht_chantry-random-.scen', 25);
+[robotPts2, ~] = loadAllScens('ht_chantry-even-.scen', 25);
+robotPts = [robotPts; robotPts2];
 
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
 [H, W] = size(B);
@@ -88,6 +68,9 @@ for k = 1:numel(freeIdx)
     T.centr{k} = [c - 0.5, r - 0.5];   % <-- center, not corner
 end
 
+%plot_environment_new([], T.map2D, T);
+
+
 % Subgraph on free cells (sparse, binary, symmetric, zero-diagonal)
 adj = spones(fullAdj(freeIdx, freeIdx));         % ensure 0/1
 adj = adj | adj.';                               % force symmetry (undirected)
@@ -105,11 +88,7 @@ invMap(freeIdx) = 1:numel(freeIdx);
 fwdMap          = freeIdx;                       % reduced -> original (linear index in B)
 
 
-plot_animation = input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
-
-if plot_animation
-    plot_environment_new([], T.map2D, T);
-end
+plot_animation = 0;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
 
 flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might take a while... (1 - yes, 0 - no)\n");
 

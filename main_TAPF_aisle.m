@@ -5,34 +5,24 @@ clc;
 addpath(['.' filesep 'functions']);
 addpath(['.' filesep 'maps']);
 
-% Ask for the number of experiments
-n_exp = input('Number of experiments to be performed: ');
+%% parameters
+fprintf(1,"==========================================================================================");
+fprintf(1,"\nTask Allocation and Path Findings algorithm\n");
+fprintf(1,"==========================================================================================\n");
+fprintf(1,"main program for TAPF -  number of tasks is equal with the number of robots.\n");
+fprintf("The initial positions of the robots and the environment are randomly generated from .scen file.\n");
 
-% Explain to the user how to input the vector
-fprintf('Input a vector [n1 n2 n3 ...] with the number of robots for each experiment.\n');
-fprintf('Example: [10 20 30 40 50 100]\n');
+fprintf("\t - initial positions of the robots are represented with red triangles;\n");
+fprintf("\t - regions are represented with yellow diamonds;\n");
+fprintf("\t - obstacles are represented with black;\n");
 
-% Ask for the vector of robot counts
-N_robots = input('Vector with number of robots for experiments: ');
+%n_exp = input("number of experiments: "); %number of experiments to be performed
+n_exp = 10; %number of experiments to be performed
+%N_robots = [500 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
+N_robots = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]; %number of robots for experiments
 
-fprintf(1,'Paris_1_256.map will be used.\n');
-
-B = load_map('Paris_1_256.map');
-[robotPts, scenTbl] = loadAllScens('Paris_1_256-random-.scen', 25);
-
-%B = load_map('lak303d.map');
-%robotPts = loadlak303dAllScens(".\maps");
-%B = load_map('lgt601d.map');
-%robotPts = loadSingleScenFile('lgt601d_map.scen');
-
-%B = load_map('lak201d.map');
-%robotPts = loadSingleScenFile('lak201d.map.scen');
-
-%B = load_map('maze-128-128-10.map');
-%[robotPts, scenTbl] = loadAllScens('maze-128-128-10-random-.scen', 25);
-
-%B = load_map('warehouse-10-20-10-2-1.map');
-%[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
+B = load_map('warehouse-10-20-10-2-4.map');
+[robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
 
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
 [H, W] = size(B);
@@ -44,27 +34,37 @@ for i = 1:numel(robotPts)
     robotPts{i} = p;
 end
 
-% 1) Convertir todo de golpe a una matriz 2×(2N)
-M = cell2mat(robotPts.');   % transponer a 1×N para concatenar horizontalmente
+% --- Extrae todos los puntos de inicio y final
+starts = cellfun(@(p) p(1,:), robotPts, 'UniformOutput', false);
+goals  = cellfun(@(p) p(2,:), robotPts, 'UniformOutput', false);
 
-% 2) Separar inicios y finales (cada par de columnas es [x y])
-starts = [ M(1,1:2:end).',  M(1,2:2:end).' ];   % N×2  [xS yS]
-goals  = [ M(2,1:2:end).',  M(2,2:2:end).' ];   % N×2  [xG yG]
+starts = vertcat(starts{:});
+goals  = vertcat(goals{:});
 
-% (opcional) Forzar enteros si procede:
-% starts = round(starts); goals = round(goals);
+% --- Selección según coordenada x
+mask_init = (starts(:,1) < 25);
+mask_goal = (goals(:,1)  > 28) & (goals(:,1)  < 130);
 
-% 3) Quitar filas con NaN/Inf (por seguridad)
-starts = starts(all(isfinite(starts),2), :);
-goals  = goals (all(isfinite(goals ),2), :);
+% --- Puntos iniciales y finales candidatos
+initPts_all = starts(mask_init, :);
+goalPts_all = goals(mask_goal, :);
 
-% 4) Eliminar duplicados manteniendo el orden de aparición
-[starts_u, iaS] = unique(starts, 'rows', 'stable');
-[goals_u,  iaG] = unique(goals,  'rows', 'stable');
+% --- Asegurar que no hay puntos repetidos
+[~, ia] = unique(initPts_all, 'rows');
+initPts = num2cell(initPts_all(ia, :), 2);
 
-% 5) Volver a cell {K×1} con cada fila [x y]
-initPts = mat2cell(starts_u, ones(size(starts_u,1),1), 2);
-goalPts = mat2cell(goals_u,  ones(size(goals_u,1),1), 2);
+[~, ig] = unique(goalPts_all, 'rows');
+goalPts = num2cell(goalPts_all(ig, :), 2);
+
+% --- Eliminar solapamiento entre conjuntos (por si acaso)
+initMat = vertcat(initPts{:});
+goalMat = vertcat(goalPts{:});
+
+[~, ia] = setdiff(initMat, goalMat, 'rows', 'stable');
+[~, ig] = setdiff(goalMat, initMat, 'rows', 'stable');
+
+initPts = initPts(ia);
+goalPts = goalPts(ig);
 
 fprintf('Generated %d unique initial points and %d unique final points.\n', ...
         numel(initPts), numel(goalPts));
@@ -88,6 +88,8 @@ for k = 1:numel(freeIdx)
     T.centr{k} = [c - 0.5, r - 0.5];   % <-- center, not corner
 end
 
+%plot_environment_new([], T.map2D, T);
+
 % Subgraph on free cells (sparse, binary, symmetric, zero-diagonal)
 adj = spones(fullAdj(freeIdx, freeIdx));         % ensure 0/1
 adj = adj | adj.';                               % force symmetry (undirected)
@@ -105,11 +107,7 @@ invMap(freeIdx) = 1:numel(freeIdx);
 fwdMap          = freeIdx;                       % reduced -> original (linear index in B)
 
 
-plot_animation = input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
-
-if plot_animation
-    plot_environment_new([], T.map2D, T);
-end
+plot_animation = 0;%input("Do you want to plot the environment and the trajectories? (1 - yes, 0 - no)\n");
 
 flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might take a while... (1 - yes, 0 - no)\n");
 
@@ -143,7 +141,6 @@ for i = 1 : numel(N_robots)
         T.props = idxGoal;
 
         if plot_animation
-           %plot_environment_new(selectedPts, T.map2D, T);
            plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
         end
 
@@ -157,7 +154,6 @@ for i = 1 : numel(N_robots)
         sim(exp).T     = T;
         sim(exp).success = flag;
     end
-    save(sprintf('simulations_TAPF_%drobots.mat', N_r), 'sim', '-v7.3');
+    save(sprintf('simulations_TAPF_aisle_%drobots.mat', N_r), 'sim', '-v7.3');
     clear sim;
 end
-
