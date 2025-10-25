@@ -1,5 +1,5 @@
-function [MILP1,ILP1] = solve_mILPr(Post,Pre,mf,m0,flag_ILP)
-MILP1.exitflag = 0;
+function [LP1,ILP1] = solve_mILPr(Post,Pre,mf,m0,flag_ILP)
+LP1.exitflag = 0;
 ILP1.exitflag = 0;
 
 %initializations
@@ -15,24 +15,29 @@ try
     Aineq1 = sparse([Post -ones(nplaces,1)]);
     bineq1 = sparse(-m0);
 
-    opt = optimoptions('intlinprog','Display','none','MaxTime', 3600);
+    time_limit = 1200;
+    opt = optimoptions('intlinprog','Display','none','MaxTime', time_limit);
     upper = [inf(ntrans,1);nR];
 
     tic;
     [sol1,fval1,exitflag1] = intlinprog(f1,[],Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),upper,[],opt);
     time_LP1 = toc;
-    if (exitflag1 ~= 1)
-        fprintf('Error solving first problem!\n');
+
+    if time_LP1 > time_limit
+        fprintf('Solving the LP problem takes more than %i seconds!\n',time_limit);
+        LP1.exitflag = 3600;
+        LP1.runtime = time_LP1;
     else
-        if time_LP1>3600
-            fprintf('Solving the LP problem lasts more than 3600 seconds!\n');
-            MILP1.exitflag = 3600;
+        if (exitflag1 ~= 1)
+            fprintf('Error solving first problem (not for time limit reasons)!\n');
+            LP1.exitflag = exitflag1;
+            LP1.runtime = time_LP1;
         else
             fprintf('First LP problem solved! (m, sigma, s - real variables)\n');
-            MILP1.sol = sol1;
-            MILP1.cost = fval1;
-            MILP1.exitflag = exitflag1;
-            MILP1.runtime = time_LP1;
+            LP1.sol = sol1;
+            LP1.cost = fval1;
+            LP1.exitflag = exitflag1;
+            LP1.runtime = time_LP1;
         end
     end
 
@@ -40,12 +45,16 @@ try
         tic;
         [sol1i,fval1i,exitflag1i] = intlinprog(f1,1:size(Aineq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),[],[],opt);
         time_ILP1 = toc;
-        if (exitflag1 ~= 1)
-            fprintf('Error solving first problem!\n');
+
+        if time_ILP1 > time_limit
+            fprintf('Solving the ILP problem takes more than %i seconds!\n',time_limit);
+            ILP1.exitflag = 3600;
+            ILP1.runtime = time_ILP1;
         else
-            if time_ILP1>3600
-                fprintf('Solving the ILP problem lasts more than 3600 seconds!\n');
-                ILP1.exitflag = 3600;
+            if (exitflag1 ~= 1)
+                fprintf('Error solving first problem!\n');
+                ILP1.exitflag = exitflag1i;
+                ILP1.runtime = time_ILP1;
             else
                 fprintf('ILP problem solved! (m, sigma, x and s - integer variables)\n');
                 ILP1.sol = sol1i;
@@ -54,12 +63,10 @@ try
                 ILP1.runtime = time_ILP1;
             end
         end
-    else
-        ILP1 = 0;
     end
 catch
     warning('Out of memory error.');
-    MILP1.exitflag = 10;
+    LP1.exitflag = 10;
     ILP1.exitflag = 10;
     return;
 end
