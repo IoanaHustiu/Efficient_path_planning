@@ -6,23 +6,12 @@ fclose('all');
 addpath(['.' filesep 'functions']);
 addpath(['.' filesep 'maps']);
 
-%% parameters
-fprintf(1,"==========================================================================================");
-fprintf(1,"\nTask Allocation and Path Findings algorithm\n");
-fprintf(1,"==========================================================================================\n");
-fprintf(1,"main program for TAPF -  number of tasks is equal with the number of robots.\n");
-fprintf("The initial positions of the robots and the environment are randomly generated from .scen file.\n");
-
-fprintf("\t - initial positions of the robots are represented with red triangles;\n");
-fprintf("\t - regions are represented with yellow diamonds;\n");
-fprintf("\t - obstacles are represented with black;\n");
-
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 n_exp = 20; %number of experiments to be performed
 %N_robots = [500 20 30 40 50 100 250 500 750 1000 1250 1500 1750 2000 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
-N_robots = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]; %number of robots for experiments
+N_robots = [5 10 20 30 40 50 60 70 80 90 100]; %number of robots for experiments
 
-B = load_map('warehouse-10-20-10-2-4.map');
+B = load_map('warehouse-10-20-10-2-1.map');
 [robotPts, scenTbl] = loadAllScens('warehouse-10-20-10-2-1-random-.scen', 25);
 
 % Convert coordinates from (0,0 top-left) → (0,0 bottom-left)
@@ -35,7 +24,7 @@ for i = 1:numel(robotPts)
     robotPts{i} = p;
 end
 
-% --- Extrae todos los puntos de inicio y final
+%% --- Extrae todos los puntos de inicio y final
 starts = cellfun(@(p) p(1,:), robotPts, 'UniformOutput', false);
 goals  = cellfun(@(p) p(2,:), robotPts, 'UniformOutput', false);
 
@@ -113,47 +102,63 @@ flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might t
 %%
 for i = 1 : numel(N_robots)
     N_r = N_robots(i); % Set the number of robots for the current iteration
-    if (i > 1)
+    for max_reg = 1 : min(10,floor(numel(goalPts)/N_r))
+        fprintf(1,'\nMaximum number of destinations per robot %i',max_reg);
+        success = 0; % Initialize success counter for the current number of robots
+        for exp=1:n_exp
+            fprintf(1,"\n\n=======================================\n");
+            fprintf(1,"Experiment number %i (%i robots)\n",exp,N_r);
+            fprintf(1,"=======================================\n");
+
+            %Generate Boolean goal
+            el = randi([1 max_reg],1,N_r);
+            N_p = sum(el);
+            At = zeros(N_r,sum(el));
+            bt = -ones(N_r,1);
+
+            At(1,1:el(1)) = -ones(1,el(1));
+            for j = 2:N_r
+                At(j,sum(el(1:j-1))+1:sum(el(1:j))) = -ones(1,el(j));
+            end
+
+            rng('shuffle');                                  % different sample each run
+            selIdxStart      = randperm(numel(initPts), N_r);
+            selectedStart = initPts(selIdxStart);
+            selIdxFin      = randperm(numel(goalPts), N_p);
+            selectedFin = goalPts(selIdxFin);
+
+            fprintf('Selected %i start and %i goal points.\n', N_r, N_p);
+
+            [m0, idxStart] = initial_marking_multi_boolean(selectedStart, B, invMap, nplaces);
+            matt = cell2mat(selectedFin);
+            rows = matt(:,2) + 1;
+            cols = matt(:,1) + 1;
+            lin  = sub2ind([H, W], rows, cols);
+            idxFin = double(invMap(lin));
+
+            T.props = idxFin;
+
+            if plot_animation
+                plot_environment_new_SG_boolean(selectedStart, selectedFin, T.map2D);
+            end
+
+            [optVal, flag] = solve_LPs_collision_avoidance_boolean_CM(Post,Pre,At,bt,m0,T,flag_ILP,plot_animation);
+            if flag, success = success + 1; end
+
+            sim(exp).optim = optVal;
+            sim(exp).flag  = flag;
+            sim(exp).m0    = m0;
+            sim(exp).selectedFin    = selectedFin;
+            sim(exp).At    = At;
+            sim(exp).T     = T;
+            sim(exp).success = flag;
+            sim(exp).max_reg = max_reg;
+            sim(exp).formula = el;
+        end
         fprintf(1,'\nSolved %i from %i experiments.',success,n_exp);
+        save(sprintf('simulations_aisle_boolean_%drobots_%dN_p.mat', N_r, max_reg), 'sim', '-v7.3');
+        fprintf(1,'\n');
+        clear sim;
     end
-    success = 0; % Initialize success counter for the current number of robots
-    for exp=1:n_exp
-        fprintf(1,"\n\n=======================================\n");
-        fprintf(1,"Experiment number %i (%i robots)\n",exp,N_r);
-        fprintf(1,"=======================================\n");
-        %% --- Randomly select N_r start/goal pairs ---
-        nTotal = min(numel(initPts),numel(goalPts));
-        if N_r > nTotal
-            warning('Number of robots (%d) exceeds the available pairs (%d). Using all.', N_r, nTotal);
-            N_r = nTotal;
-        end
-        rng('shuffle');                                  % different sample each run
-        selIdxStart      = randperm(numel(initPts), N_r);
-        selectedStart = initPts(selIdxStart);
-        selIdxFin      = randperm(numel(goalPts), N_r);
-        selectedFin = goalPts(selIdxFin);
-
-        fprintf('Selected %d start and goal points.\n', N_r);
-
-        [m0, mf, idxStart, idxGoal] = initial_marking_multi_new(selectedStart,selectedFin, B, invMap, nplaces);
-
-        T.props = idxGoal;
-
-        if plot_animation
-           plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
-        end
-
-        [optVal, flag] = solve_LPs_collision_avoidance_CM(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
-        if flag, success = success + 1; end
-
-        sim(exp).optim = optVal;
-        sim(exp).flag  = flag;
-        sim(exp).m0    = m0;
-        sim(exp).mf    = mf;
-        sim(exp).T     = T;
-        sim(exp).success = flag;
-    end
-    save(sprintf('simulations_TAPF_aisle_%drobots.mat', N_r), 'sim', '-v7.3');
-    fprintf(1,'\n');
-    clear sim;
 end
+

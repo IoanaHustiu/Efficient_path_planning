@@ -4,12 +4,15 @@ flag = 1;
 nplaces = size(Post,1);
 ntrans  = size(Post,2);
 nR      = sum(m0);
-env_limit = size(T.map2D);
 
 % Construcción de V 
-np  = size(At,2);
-V   = zeros(np,nplaces);
-idx = sub2ind([np,nplaces], (1:np)', T.props(:));
+
+np = size(At, 2);
+V  = zeros(np, nplaces);
+
+% goals: vector columna con los índices de los lugares finales (1..nplaces)
+goals = double(T.props(:));                 % o el vector que uses
+idx = sub2ind([np, nplaces], (1:np)', goals);
 V(idx) = 1;
 
 % Constantes (evitar "números mágicos")
@@ -94,15 +97,14 @@ fprintf(1,'\nSolution for MILP1 found in %f [secs].', simulation.LP1.runtime);
 fprintf(1,'\nOptimal solution MILP1 = %s', num2str(simulation.LP1.cost));
 fprintf(1,'\nInfinite norm for MILP1 of Post * sigma = %s', num2str(simulation.LP1.cellCapacity));
 if flag_ILP
-    fprintf(1,'\nSolution for MILP1 found in %f [secs].', simulation.ILP1.runtime);
-    fprintf(1,'\nOptimal solution MILP1 = %s', num2str(simulation.ILP1.cost));
-    fprintf(1,'\nInfinite norm for MILP1 of Post * sigma = %s', num2str(simulation.ILP1.cellCapacity));
+    fprintf(1,'\nSolution for ILP1 found in %f [secs].', simulation.ILP1.runtime);
+    fprintf(1,'\nOptimal solution ILP1 = %s', num2str(simulation.ILP1.cost));
+    fprintf(1,'\nInfinite norm for ILP1 of Post * sigma = %s', num2str(simulation.ILP1.cellCapacity));
 end
 % ====================== DECISIÓN DE SEGUNDO PROBLEMA ======================
 if norm(s - 1) < 1000*eps && norm(x - round(x)) < 1000*eps
     % Capacidad 1 y x entero -> no resolver segundo problema
     num_intermediate = 1;
-    fprintf('Cell capacity is equal with 1 and x is integer. Second problem will not be solved!\n');
     fprintf("\nCollision avoidance is already imposed. The second problem will not be solved.\n");
 
     % Estructuras triviales
@@ -255,17 +257,11 @@ else
 end
 
 % ====================== RESÚMENES FINALES ======================
-fprintf(1,'\nSolution MILP found in %f [secs].', simulation.MILP.runtime);
-fprintf(1,'\nOptimal value MILP = %s\n', num2str(simulation.MILP.cost));
+%fprintf(1,'\nSolution MILP found in %f [secs].', simulation.MILP.runtime);
+%fprintf(1,'\nOptimal value MILP = %s\n', num2str(simulation.MILP.cost));
 fprintf(1,'\nTotal time for solution LP1+MILP: %f [sec].', simulation.LP1.runtime + simulation.MILP.runtime);
 if flag_ILP
     fprintf(1,'\nTotal time for solution ILP1+ILP2 with intermediary markings: %f [sec].', simulation.ILP1.runtime + simulation.ILP2.runtime);
-end
-
-if (plot_animation)
-    fprintf(1,'\n============================================================');
-    fprintf(1,'\n    Solution for MILP obtained using intlinprog solver ');
-    fprintf(1,'\n============================================================\n');
 end
 
 % ====================== PLOT ======================
@@ -289,7 +285,7 @@ if plot_animation
         selectedStart = [start_c - 0.5 , start_r - 0.5 ];
         selectedFin   = [goal_c  - 0.5 , goal_r  - 0.5 ];
 
-        plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
+        plot_environment_new_SG_boolean(selectedStart, selectedFin, T.map2D);
         title(sprintf('Efficient path planning (LP1 + LP2): iteration %d', i));
         hold on;
 

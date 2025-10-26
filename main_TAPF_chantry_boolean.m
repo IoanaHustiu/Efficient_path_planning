@@ -1,13 +1,14 @@
 close all;
 clear;
 clc;
+fclose('all');
 
 addpath(['.' filesep 'functions']);
 addpath(['.' filesep 'maps']);
 
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 n_exp = 1; %number of experiments to be performed
-N_robots = [10 ]; %number of robots for experiments
+N_robots = [100 ]; %number of robots for experiments
 
 B = load_map('ht_chantry.map');
 [robotPts, ~] = loadAllScens('ht_chantry-random-.scen', 25);
@@ -95,6 +96,7 @@ for i = 1 : numel(N_robots)
     if (i > 1)
         fprintf(1,'Solved %i from %i experiments.',success,n_exp);
     end
+    max_reg = 6;
     success = 0; % Initialize success counter for the current number of robots
     for exp=1:n_exp
         fprintf(1,"\n\n=======================================\n");
@@ -102,47 +104,33 @@ for i = 1 : numel(N_robots)
         fprintf(1,"=======================================\n");
 
         %Generate Boolean goal
-        i = 3;
-        el = randi([0 i],1,N_r);
-        i = [0 cumsum(el)];
-
-        N_p = N_r + sum(el);
-
-        At = zeros(N_r,N_r+sum(el));
+        el = randi([1 max_reg],1,N_r);
+        N_p = sum(el);
+        At = zeros(N_r,sum(el));
         bt = -ones(N_r,1);
-        At(:,1:N_r) = -eye(N_r);
 
-        for j=1:N_r
-            if el(j)>0
-                At(j,N_r+sum_el(j)+1:N_r+sum_el(j)+el(j)) = -ones(1,el(j));
-            end
+        At(1,1:el(1)) = -ones(1,el(1));
+        for j = 2:N_r
+            At(j,sum(el(1:j-1))+1:sum(el(1:j))) = -ones(1,el(j));
         end
 
-
-        %% --- Randomly select N_r start/goal pairs ---
-        nTotal = min(numel(initPts),numel(goalPts));
-        if N_r > nTotal
-            warning('Number of robots (%d) exceeds the available pairs (%d). Using all.', N_r, nTotal);
-            N_r = nTotal;
-        end
         rng('shuffle');                                  % different sample each run
         selIdxStart      = randperm(numel(initPts), N_r);
         selectedStart = initPts(selIdxStart);
-        selIdxFin      = randperm(numel(goalPts), N_r);
+        selIdxFin      = randperm(numel(goalPts), N_p);
         selectedFin = goalPts(selIdxFin);
 
-        fprintf('Selected %d start and goal points.\n', N_r);
+        fprintf('Selected %i start and %i goal points.\n', N_r, N_p);
 
-        [m0, mf, idxStart, idxGoal] = initial_marking_multi_new(selectedStart,selectedFin, B, invMap, nplaces);
-
-        T.props = idxGoal;
+        [m0, idxStart] = initial_marking_multi_boolean(selectedStart, B, invMap, nplaces);
+        T.props = selIdxFin;
 
         if plot_animation
            %plot_environment_new(selectedPts, T.map2D, T);
-           plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
+           plot_environment_new_SG_boolean(selectedStart, selectedFin, T.map2D);
         end
 
-        [optVal, flag] = solve_LPs_collision_avoidance_CM(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
+        [optVal, flag] = solve_LPs_collision_avoidance_boolean_CM(Post,Pre,At,bt,m0,T,flag_ILP,plot_animation);
         if flag, success = success + 1; end
 
         sim(exp).optim = optVal;
@@ -152,7 +140,7 @@ for i = 1 : numel(N_robots)
         sim(exp).T     = T;
         sim(exp).success = flag;
     end
-    save(sprintf('simulations_TAPF_%drobots.mat', N_r), 'sim', '-v7.3');
+    save(sprintf('simulations_boolean_%drobots.mat', N_r), 'sim', '-v7.3');
     fprintf(1,'\n');
     clear sim;
 end
