@@ -7,7 +7,7 @@ addpath(['.' filesep 'maps']);
 
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 n_exp = 1; %number of experiments to be performed
-N_robots = [30 ]; %number of robots for experiments
+N_robots = [10 ]; %number of robots for experiments
 
 B = load_map('ht_chantry.map');
 [robotPts, ~] = loadAllScens('ht_chantry-random-.scen', 25);
@@ -68,9 +68,6 @@ for k = 1:numel(freeIdx)
     T.centr{k} = [c - 0.5, r - 0.5];   % <-- center, not corner
 end
 
-%plot_environment_new([], T.map2D, T);
-
-
 % Subgraph on free cells (sparse, binary, symmetric, zero-diagonal)
 adj = spones(fullAdj(freeIdx, freeIdx));         % ensure 0/1
 adj = adj | adj.';                               % force symmetry (undirected)
@@ -126,7 +123,7 @@ for i = 1 : numel(N_robots)
            plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
         end
 
-        [optVal, flag] = solve_LPs_collision_avoidance(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
+        [optVal, flag] = solve_LPs_collision_avoidance_CM(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
         if flag, success = success + 1; end
 
         sim(exp).optim = optVal;
@@ -137,6 +134,7 @@ for i = 1 : numel(N_robots)
         sim(exp).success = flag;
     end
     save(sprintf('simulations_TAPF_%drobots.mat', N_r), 'sim', '-v7.3');
+    fprintf(1,'\n');
     clear sim;
 end
 

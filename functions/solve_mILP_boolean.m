@@ -56,7 +56,7 @@ try
     if flag_ILP
         fprintf(1,'\nStart solving the ILP formulation...\n');
         tic;
-        [sol1i,fval1i,exitflag1i] = intlinprog(f1,1:size(Aineq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),[],[],opt);
+        [sol1i,fval1i,exitflag1i] = intlinprog(f1,1:size(Aineq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),upper,[],opt);
         time_ILP1 = toc;
 
         if time_ILP1 >= time_limit

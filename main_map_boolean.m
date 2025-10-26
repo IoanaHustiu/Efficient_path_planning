@@ -77,7 +77,7 @@ for exp=1:n_exp
         %Generate Boolean goal
         i = 3;
         el = randi([0 i],1,N_r);
-        sum_el = [0 cumsum(el)];
+        i = [0 cumsum(el)];
 
         N_p = N_r + sum(el);
 

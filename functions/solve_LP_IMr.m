@@ -66,7 +66,7 @@ try
 
     if flag_ILP
         tic;
-        [sol2i,fval2i,exitflag2i] = intlinprog(f2,1:size(Aineq2,1),Aineq2,bineq2,Aeq2,beq2,zeros(1,size(Aeq2,2)),[],[],opt);
+        [sol2i,fval2i,exitflag2i] = intlinprog(f2,1:size(Aineq2,2),Aineq2,bineq2,Aeq2,beq2,zeros(1,size(Aeq2,2)),[],[],opt);
         time_ILP2 = toc;
 
         if time_ILP2 > time_limit

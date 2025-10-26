@@ -29,7 +29,7 @@ try
         LP1.runtime = time_LP1;
     else
         if (exitflag1 ~= 1)
-            fprintf('Error solving first problem (not for time limit reasons)!\n');
+            fprintf('Error solving first LP problem (not for time limit reasons)!\n');
             LP1.exitflag = exitflag1;
             LP1.runtime = time_LP1;
         else
@@ -43,7 +43,8 @@ try
 
     if flag_ILP
         tic;
-        [sol1i,fval1i,exitflag1i] = intlinprog(f1,1:size(Aineq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),[],[],opt);
+        [sol1i,fval1i,exitflag1i] = intlinprog(f1,1:size(Aineq1,2),Aineq1,bineq1,Aeq1,beq1,zeros(1,size(Aeq1,2)),upper,[],opt);
+
         time_ILP1 = toc;
 
         if time_ILP1 > time_limit
@@ -51,8 +52,8 @@ try
             ILP1.exitflag = 3600;
             ILP1.runtime = time_ILP1;
         else
-            if (exitflag1 ~= 1)
-                fprintf('Error solving first problem!\n');
+            if (exitflag1i ~= 1)
+                fprintf('Error solving first ILP problem!\n');
                 ILP1.exitflag = exitflag1i;
                 ILP1.runtime = time_ILP1;
             else
