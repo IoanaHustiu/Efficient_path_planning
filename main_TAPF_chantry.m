@@ -47,7 +47,7 @@ initPts = mat2cell(starts_u, ones(size(starts_u,1),1), 2);
 goalPts = mat2cell(goals_u,  ones(size(goals_u,1),1), 2);
 
 fprintf('Generated %d unique initial points and %d unique final points.\n', ...
-        numel(initPts), numel(goalPts));
+    numel(initPts), numel(goalPts));
 
 % Flip B vertically to match Cartesian coordinates
 B = flipud(B);
@@ -119,11 +119,11 @@ for i = 1 : numel(N_robots)
         T.props = idxGoal;
 
         if plot_animation
-           %plot_environment_new(selectedPts, T.map2D, T);
-           plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
+            %plot_environment_new(selectedPts, T.map2D, T);
+            plot_environment_new_SG(selectedStart, selectedFin, T.map2D, T);
         end
 
-        [optVal, flag] = solve_LPs_collision_avoidance_CM(Post,Pre,mf,m0,T,flag_ILP,plot_animation);
+        [optVal, flag] = solve_LPs_collision_avoidance_CM(Post,Pre,mf,m0,T,flag_ILP,plot_animation); 
         if flag, success = success + 1; end
 
         sim(exp).optim = optVal;
@@ -138,3 +138,179 @@ for i = 1 : numel(N_robots)
     clear sim;
 end
 
+
+dataDir = pwd;
+
+files = dir(fullfile(dataDir, 'simulations_TAPF_*robots.mat'));
+if isempty(files)
+    warning('No se encontraron ficheros simulations_TAPF_*robots.mat en %s', dataDir);
+    T = table(); return;
+end
+
+expr = 'simulations_TAPF_(\d+)robots\.mat';
+
+results = [];
+
+for k = 1:numel(files)
+    fname = files(k).name;
+    fpath = fullfile(files(k).folder, fname);
+
+    tok = regexp(fname, expr, 'tokens', 'once');
+    if isempty(tok), fprintf('Saltando %s (patrón)\n', fname); continue; end
+    nRobots = str2double(tok{1});
+
+    S = load(fpath);
+    if ~isfield(S,'sim') || ~isstruct(S.sim)
+        fprintf('Saltando %s (sin struct "sim")\n', fname); continue;
+    end
+    sim = S.sim;
+    nExp = numel(sim);
+
+    % Arrays por experimento
+    rLP    = nan(nExp,1);   % runtimeLP por experimento (suma de partes válidas)
+    rILP   = nan(nExp,1);   % runtimeILP por experimento (suma de partes válidas)
+    svals  = nan(nExp,1);   % sbar por experimento
+    costs  = nan(nExp,1);   % coste por experimento
+    succ   = nan(nExp,1);   % éxito global
+
+    for i = 1:nExp
+        % Éxito global sim(i).success
+        if isfield(sim(i),'success')
+            succ(i) = toScalar(sim(i).success);
+        else
+            succ(i) = NaN;
+        end
+
+        hasOpt = isfield(sim(i),'optim') && isstruct(sim(i).optim);
+
+        % ---------------- runtimeLP ----------------
+        part_sum = 0; part_cnt = 0;
+        if hasOpt && isfield(sim(i).optim,'LP1') && isstruct(sim(i).optim.LP1)
+            lp1 = sim(i).optim.LP1;
+            if isfield(lp1,'exitflag') && toScalar(lp1.exitflag)==1 ...
+                    && isfield(lp1,'runtime') && ~isnan(succ(i)) && succ(i) == 1
+                part_sum = part_sum + toScalar(lp1.runtime);
+                part_cnt = part_cnt + 1;
+            end
+        end
+        if isfield(sim(i).optim,'LP2') && isstruct(sim(i).optim.LP2) ...
+                && isfield(sim(i).optim.LP2,'success') && toScalar(sim(i).optim.LP2.success)==1 ...
+                && isfield(sim(i).optim.LP2,'runtime_all')  && isfield(sim(i).optim.LP2,'runtime') ...
+                && isfield(lp1,'cellCapacity') && toScalar(lp1.cellCapacity) > 1 && ~isnan(succ(i)) ...
+                && succ(i) == 1
+            if (toScalar(sim(i).optim.LP2.runtime_all) == 0)
+                part_sum = part_sum + toScalar(sim(i).optim.LP2.runtime);
+            else
+                part_sum = part_sum + toScalar(sim(i).optim.LP2.runtime_all);
+            end
+            part_cnt = part_cnt + 1;
+        end
+        if part_cnt > 0, rLP(i) = part_sum; end
+
+        % ---------------- runtimeILP ----------------
+        part_sum = 0; part_cnt = 0;
+        if hasOpt && isfield(sim(i).optim,'ILP1') && isstruct(sim(i).optim.ILP1) ...
+                && isfield(sim(i).optim,'LP1')  && isstruct(sim(i).optim.LP1) ...
+                && ~isnan(succ(i)) && succ(i) == 1
+            ilp1 = sim(i).optim.ILP1; lp1 = sim(i).optim.LP1;
+            if isfield(lp1,'exitflag') && toScalar(lp1.exitflag)==1 ...
+                    && isfield(ilp1,'runtime') && ~isnan(succ(i)) && succ(i) == 1
+                part_sum = part_sum + toScalar(ilp1.runtime);
+                part_cnt = part_cnt + 1;
+            end
+        end
+        if isfield(sim(i).optim,'LP2') && isstruct(sim(i).optim.LP2) ...
+                && isfield(sim(i).optim.LP2,'success') && toScalar(sim(i).optim.LP2.success)==1 ...
+                && isfield(sim(i).optim,'ILP2') && isstruct(sim(i).optim.ILP2) ...
+                && isfield(sim(i).optim.ILP2,'runtime_all') && isfield(ilp1,'cellCapacity') ...
+                && toScalar(ilp1.cellCapacity) > 1 && ~isnan(succ(i)) && succ(i) == 1
+            if toScalar(sim(i).optim.ILP2.runtime_all) > 0
+                part_sum = part_sum + toScalar(sim(i).optim.ILP2.runtime_all);
+            else
+                part_sum = part_sum + toScalar(sim(i).optim.ILP2.runtime);
+            end
+            part_cnt = part_cnt + 1;
+        end
+        if part_cnt > 0, rILP(i) = part_sum; end
+
+        % ---------------- sbar (por experimento) ----------------
+        sval = NaN;
+        if isfield(sim(i).optim,'LP2') && isstruct(sim(i).optim.LP2) ...
+                && isfield(sim(i).optim.LP2,'success') && toScalar(sim(i).optim.LP2.success)==1 ...
+                && isfield(sim(i).optim.LP2,'no_inter_markings') && ~isnan(succ(i)) && succ(i) == 1
+            sval = toScalar(sim(i).optim.LP2.no_inter_markings);
+        elseif hasOpt && isfield(sim(i).optim,'LP1') && isstruct(sim(i).optim.LP1) ...
+                && isfield(sim(i).optim.LP1,'exitflag') && toScalar(sim(i).optim.LP1.exitflag)==1 ...
+                && isfield(sim(i).optim.LP1,'cellCapacity') && ~isnan(succ(i)) && succ(i) == 1
+            sval = toScalar(sim(i).optim.ILP1.cellCapacity);
+        end
+        svals(i) = sval;
+
+        % ---------------- cost (por experimento) ----------------
+        c = NaN;
+        if hasOpt && isfield(sim(i).optim,'LP2') && isstruct(sim(i).optim.LP2) ...
+                && isfield(sim(i).optim.LP2,'success') && toScalar(sim(i).optim.LP2.success)==1 ...
+                && isfield(sim(i).optim.LP2,'cost') && ~isnan(succ(i)) && succ(i) == 1
+            c = toScalar(sim(i).optim.LP2.cost);
+        elseif hasOpt && isfield(sim(i).optim,'LP1') && isstruct(sim(i).optim.LP1) ...
+                && isfield(sim(i).optim.LP1,'exitflag') && toScalar(sim(i).optim.LP1.exitflag)==1 ...
+                && isfield(sim(i).optim.LP1,'cost') && isfield(sim(i).optim.LP1,'cellCapacity') ...
+                && toScalar(sim(i).optim.LP1.cellCapacity)==1 && ~isnan(succ(i)) && succ(i) == 1
+            c = toScalar(sim(i).optim.LP1.cost);
+        end
+        costs(i) = c;
+    end
+
+    % ---- Agregar fila por nº de robots ----
+    row = struct();
+    row.robots      = nRobots;
+    row.runtimeLP   = mean(rLP,  'omitnan');
+    row.runtimeILP  = mean(rILP, 'omitnan');
+    row.cost        = mean(costs,'omitnan');
+
+    valid_s = svals(~isnan(svals));
+    if isempty(valid_s)
+        row.sbar_mean = NaN; row.sbar_min = NaN; row.sbar_max = NaN;
+    else
+        row.sbar_mean = double(mean(valid_s));
+        row.sbar_min  = double(min(valid_s));
+        row.sbar_max  = double(max(valid_s));
+    end
+
+    if all(isnan(succ))
+        row.SR_percent = NaN;
+    else
+        row.SR_percent = 100 * mean(succ == 1, 'omitnan');
+    end
+
+    results = [results; row]; %#ok<AGROW>
+end
+
+if isempty(results)
+    T = table();
+    warning('No se pudo construir la tabla (¿faltan datos válidos?)');
+    return;
+end
+
+T = struct2table(results);
+T = sortrows(T, 'robots');
+
+disp(T);
+outCSV = fullfile(dataDir, 'summary_TAPF.csv');
+try
+    writetable(T, outCSV);
+    fprintf('Tabla guardada en: %s\n', outCSV);
+catch ME
+    warning('No se pudo guardar el CSV: %s', ME.message);
+end
+
+function x = toScalar(v)
+if isempty(v), x = NaN; return; end
+if isnumeric(v)
+    if isscalar(v), x = double(v); else, x = double(v(1)); end
+elseif islogical(v)
+    x = double(v(1));
+else
+    try, x = double(v(1)); catch, x = NaN; end
+end
+end
