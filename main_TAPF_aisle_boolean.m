@@ -100,7 +100,7 @@ flag_ILP = 1;%input("Do you want to solve also the ILP formulation? This might t
 %%
 for i = 1 : numel(N_robots)
     N_r = N_robots(i); % Set the number of robots for the current iteration
-    for max_reg = 1;%1 : min(10,floor(numel(goalPts)/N_r))
+    for max_reg = 1 : min(10,floor(numel(goalPts)/N_r))
         fprintf(1,'\nMaximum number of destinations per robot %i',max_reg);
         success = 0; % Initialize success counter for the current number of robots
         for exp=1:n_exp
