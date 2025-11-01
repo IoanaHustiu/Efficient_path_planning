@@ -7,7 +7,7 @@ addpath(['.' filesep 'maps']);
 
 %n_exp = input("number of experiments: "); %number of experiments to be performed
 n_exp = 20; %number of experiments to be performed
-N_robots = [10 50 100 250 500 750 1000 1250 1500 1750 2000 2250 2500 2750 3000 3250 3500 3750 4000]; %number of robots for experiments
+N_robots = [10 50 100 250 500 750 1000 1250 1500 1750 2000 2250 2500]; %number of robots for experiments
 
 B = load_map('ht_chantry.map');
 [robotPts, ~] = loadAllScens('ht_chantry-random-.scen', 25);
