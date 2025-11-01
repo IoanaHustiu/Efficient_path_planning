@@ -7,11 +7,11 @@ There are 2 main programs as it follows:
 
 1) main_TAPF_chantry.m is for solving the classical **TAPF** problem (number of regions to be reached is equal with the number of robots; for this simulations ht_chantry map from [1] is used; start-goal configurations are randomly selected from the benchmark map);
 
-Note: if after solving the first LP problem, the cell capacity s*, is greater than 1, in order to ensure collision avoidance the second LP problem will be solved using (s*) intermediary markings and cell capacity will be fixed to 1.
+Note: if after solving the first LP problem, the cell capacity s*, is greater than 1, in order to ensure collision avoidance the second LP problem will be solved using s* intermediary markings and cell capacity will be fixed to 1.
 
 2) main_TAPF_aisle_boolean.m is for **global Boolean-based goal** (extended version of TAPF problem) and a fixed team of 100 robots. The Boolean specification has multiple disjunctions per term. The simulations are performed using a warehouse environment from [1], where the narrow corridors (of unitary width) are contributing to the problem complexity by requiring multiple intermediary markings.
 
-Note: if after solving the first LP problem, the cell capacity (s*) is greater than 1, in order to ensure collision avoidance the second problem (MILP) will be solved using (s*) intermediary markings and cell capacity will be fixed to 1.
+Note: if after solving the first LP problem, the cell capacity s* is greater than 1, in order to ensure collision avoidance the second problem (MILP) will be solved using s* intermediary markings and cell capacity will be fixed to 1.
 
 Note for users:
 1) Users can choose if plots with trajectories will be displayed (by modifying the plot_animation flag).
